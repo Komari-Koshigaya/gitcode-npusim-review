@@ -1,0 +1,65 @@
+{
+  "prs": [
+    {
+      "number": 201,
+      "title": "feat(sim): add conv kernel fast path",
+      "user": { "login": "alice" },
+      "head": { "ref": "feature/conv-fastpath", "sha": "1111111111111111111111111111111111111111" },
+      "base": { "ref": "master" },
+      "html_url": "https://gitcode.com/cann/npu-simulator/pulls/201",
+      "additions": 5,
+      "deletions": 1,
+      "files_payload": {
+        "added_lines": 5,
+        "remove_lines": 1,
+        "count": 2,
+        "diffs": [
+          {
+            "new_path": "src/kernel/conv.c",
+            "old_path": "src/kernel/conv.c",
+            "content": {
+              "text": [
+                { "type": "old", "old_line": 40, "line_content": "int ret = 0;" },
+                { "type": "new", "new_line": 40, "line_content": "int ret = 0;  // TODO: handle overflow" },
+                { "type": "new", "new_line": 41, "line_content": "printf(\"conv fastpath enter\\n\");" },
+                { "type": "new", "new_line": 42, "line_content": "const char *api_key = \"sk-live-123456\";" },
+                { "type": "new", "new_line": 43, "line_content": "except: pass" }
+              ]
+            }
+          },
+          {
+            "new_path": "tests/test_conv.c",
+            "old_path": "tests/test_conv.c",
+            "content": {
+              "text": [
+                { "type": "new", "new_line": 10, "line_content": "assert(conv_fastpath() == 0);" }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "number": 202,
+      "title": "WIP: refactor scheduler (draft)",
+      "user": { "login": "bob" },
+      "head": { "ref": "refactor/scheduler", "sha": "2222222222222222222222222222222222222222" },
+      "base": { "ref": "master" },
+      "html_url": "https://gitcode.com/cann/npu-simulator/pulls/202",
+      "draft": true
+    },
+    {
+      "number": 203,
+      "title": "fix: memory leak in allocator",
+      "user": { "login": "carol" },
+      "head": { "ref": "fix/allocator", "sha": "3333333333333333333333333333333333333333" },
+      "base": { "ref": "master" },
+      "html_url": "https://gitcode.com/cann/npu-simulator/pulls/203",
+      "comments": [
+        {
+          "body": "历史检视评论\n<!-- npu-review sha=3333333333333333333333333333333333333333 -->\n"
+        }
+      ]
+    }
+  ]
+}

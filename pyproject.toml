@@ -1,0 +1,27 @@
+[project]
+name = "gitcode-npusim-review"
+version = "0.1.0"
+description = "Automated code review for open PRs of gitcode.com/cann/npu-simulator, with daily HTML reports published via GitHub Pages."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Komari-Koshigaya" }]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+npusim-review = "reviewer.cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["reviewer*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

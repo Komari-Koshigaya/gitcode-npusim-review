@@ -1,0 +1,22 @@
+# User-provided inputs / local scratch (not part of the project)
+cli-main.zip
+prompt.txt
+_extracted/
+_whl/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local previews
+*.log
+_preview/
