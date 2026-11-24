@@ -244,7 +244,7 @@ def _pr_detail_html(record: Dict[str, Any]) -> str:
 
     if record.get("comment"):
         body_parts.append(
-            '<details class="block"><summary>查看提交到 GitCode 的评论原文（Markdown）</summary>'
+            '<details class="block"><summary>查看完整检视汇总（Markdown，供本地查看）</summary>'
             f'<pre class="comment">{_esc(record["comment"])}</pre></details>'
         )
 
