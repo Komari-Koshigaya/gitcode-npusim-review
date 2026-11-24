@@ -1,12 +1,4 @@
 {
-  "repos": {
-    "cann/npu-simulator": {
-      "76": {
-        "head_sha": "b0f33b9147df54d50a6dc844462f892b7e492ce6",
-        "reviewed_at": "2026-11-24T23:03:36+08:00",
-        "source": "comment-marker"
-      }
-    }
-  },
+  "repos": {},
   "version": 1
 }
