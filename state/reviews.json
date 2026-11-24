@@ -1,6 +1,57 @@
 {
   "repos": {
-    "cann/npu-simulator": {}
+    "cann/npu-simulator": {
+      "59": {
+        "engines": [
+          "rules",
+          "llm"
+        ],
+        "findings_count": 2,
+        "head_sha": "a4bd3efa82ac3f17a6ada0e7563b7c98244ddc76",
+        "reviewed_at": "2026-11-24T23:23:41+08:00",
+        "severity": "medium"
+      },
+      "72": {
+        "engines": [
+          "rules",
+          "llm"
+        ],
+        "findings_count": 4,
+        "head_sha": "cae975623be022ec0b972ed4f4ebafa72d39dd93",
+        "reviewed_at": "2026-11-24T23:23:41+08:00",
+        "severity": "high"
+      },
+      "74": {
+        "engines": [
+          "rules",
+          "llm"
+        ],
+        "findings_count": 2,
+        "head_sha": "3ff8d6045751c73a562ca1684a03914eb0034503",
+        "reviewed_at": "2026-11-24T23:23:41+08:00",
+        "severity": "low"
+      },
+      "76": {
+        "engines": [
+          "rules",
+          "llm"
+        ],
+        "findings_count": 4,
+        "head_sha": "b0f33b9147df54d50a6dc844462f892b7e492ce6",
+        "reviewed_at": "2026-11-24T23:23:41+08:00",
+        "severity": "medium"
+      },
+      "78": {
+        "engines": [
+          "rules",
+          "llm"
+        ],
+        "findings_count": 7,
+        "head_sha": "26f5693118a249290b0b345efcc6543b38567195",
+        "reviewed_at": "2026-11-24T23:23:41+08:00",
+        "severity": "medium"
+      }
+    }
   },
   "version": 1
 }
