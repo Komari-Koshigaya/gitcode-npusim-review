@@ -12,7 +12,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from . import __version__
-from .comment import build_comment, contains_marker
+from .comment import (
+    build_comment,
+    build_inline_comment,
+    contains_inline_marker,
+    contains_marker,
+    inline_marker,
+)
 from .config import Config
 from .diffparser import DiffData, parse_files_payload, parse_text_diff
 from .engine import llm, rules
@@ -55,6 +61,26 @@ def _should_post(findings: List[Any], threshold: str) -> bool:
     if not top:
         return False
     return _SEVERITY_RANK.get(top, 99) <= _SEVERITY_RANK.get(threshold, 3)
+
+
+def _inline_candidates(findings: List[Any], config: Config) -> List[Any]:
+    """可挂到具体代码行的发现：有 file + 精确行号，且达到提交阈值。"""
+    threshold = config.min_severity_to_post if config.min_severity_to_post != "any" else "info"
+    limit = _SEVERITY_RANK.get(threshold, 2)
+    candidates: List[Any] = []
+    seen = set()
+    for finding in findings:
+        if not finding.file or not isinstance(finding.line, int) or finding.line <= 0:
+            continue
+        if _SEVERITY_RANK.get(finding.severity, 99) > limit:
+            continue
+        dedupe_key = (finding.file, finding.line, finding.rule, finding.message.strip())
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+        candidates.append(finding)
+    candidates.sort(key=lambda f: (_SEVERITY_RANK.get(f.severity, 9), f.file, f.line or 0))
+    return candidates[: max(0, config.max_inline_comments)]
 
 
 def _combine(rule_result: ReviewResult, llm_result: ReviewResult) -> ReviewResult:
@@ -118,6 +144,7 @@ class FixtureClient:
         self._diffs: Dict[int, str] = {}
         self._comments: Dict[int, List[Dict[str, Any]]] = {}
         self.posted: List[Dict[str, Any]] = []
+        self.inline: List[Dict[str, Any]] = []
         for item in prs:
             if not isinstance(item, dict):
                 continue
@@ -147,6 +174,14 @@ class FixtureClient:
         self.posted.append({"number": number, "body": body})
         return CommandResult(ok=True, stdout="(fixture) posted", stderr="", returncode=0)
 
+    def post_inline_comment(
+        self, number: int, body: str, path: str, position: int
+    ) -> CommandResult:
+        self.inline.append(
+            {"number": number, "body": body, "path": path, "position": position}
+        )
+        return CommandResult(ok=True, stdout="(fixture) inline posted", stderr="", returncode=0)
+
 
 # --------------------------------------------------------------------------- main flow
 def run_once(config: Config, client: Any, state: ReviewState) -> Dict[str, Any]:
@@ -175,6 +210,7 @@ def run_once(config: Config, client: Any, state: ReviewState) -> Dict[str, Any]:
         "posted_count": 0,
         "skipped_count": 0,
         "report_only_count": 0,
+        "inline_total": 0,
         "failed_count": 0,
         "findings_total": 0,
         "severity_counts": {key: 0 for key in SEVERITY_ORDER},
@@ -238,13 +274,14 @@ def run_once(config: Config, client: Any, state: ReviewState) -> Dict[str, Any]:
             run["prs"].append(record)
             continue
 
+        existing_comments: List[Dict[str, Any]] = []
         # 第二层：已有对应标记的评论 -> 跳过（防状态丢失 / 手动重跑重复）
         if not config.force_review and key:
             try:
-                comments = client.list_comments(number)
+                existing_comments = client.list_comments(number)
             except Exception:  # noqa: BLE001 - 读取失败不阻断
-                comments = []
-            if contains_marker(comments, key):
+                existing_comments = []
+            if contains_marker(existing_comments, key):
                 record["status"] = "skipped_existing"
                 run["skipped_count"] += 1
                 if not config.dry_run:
@@ -296,15 +333,20 @@ def run_once(config: Config, client: Any, state: ReviewState) -> Dict[str, Any]:
         comment_head = dict(head)
         comment_head["sha"] = key
         comment_pr["head"] = comment_head
-        comment = build_comment(comment_pr, diff, combined, config)
-        record["comment"] = comment
         should_post = _should_post(combined.findings, config.min_severity_to_post)
         record["should_post"] = should_post
+
+        inline_candidates = (
+            _inline_candidates(combined.findings, config) if config.inline_comments else []
+        )
+        record["inline_candidates"] = len(inline_candidates)
+        record["inline_posted"] = 0
 
         if config.dry_run:
             record["status"] = "dry_run" if should_post else "report_only"
             if not should_post:
                 run["report_only_count"] += 1
+            record["comment"] = build_comment(comment_pr, diff, combined, config)
             run["prs"].append(record)
             continue
 
@@ -312,8 +354,40 @@ def run_once(config: Config, client: Any, state: ReviewState) -> Dict[str, Any]:
             # 没有达到提交阈值：只写入报告，不评论、不落状态（下次可重新评估）。
             record["status"] = "report_only"
             run["report_only_count"] += 1
+            record["comment"] = build_comment(comment_pr, diff, combined, config)
             run["prs"].append(record)
             continue
+
+        # 先在具体代码行提交行内意见（各带独立标记，单条失败不阻断总评论）
+        inline_posted = 0
+        for finding in inline_candidates:
+            marker_text = inline_marker(key, finding.file, int(finding.line))
+            if contains_inline_marker(existing_comments, marker_text):
+                continue
+            body = build_inline_comment(finding, key)
+            try:
+                inline_result = client.post_inline_comment(
+                    number, body, finding.file, int(finding.line)
+                )
+            except Exception as exc:  # noqa: BLE001
+                record["warnings"].append(
+                    f"行内评论失败（{finding.file}:{finding.line}）：{exc}"
+                )
+                continue
+            if inline_result.ok:
+                inline_posted += 1
+                existing_comments.append({"body": body})
+            else:
+                record["warnings"].append(
+                    f"行内评论失败（{finding.file}:{finding.line}）：{inline_result.error_summary}"
+                )
+        record["inline_posted"] = inline_posted
+        run["inline_total"] += inline_posted
+
+        comment = build_comment(
+            comment_pr, diff, combined, config, inline_posted=inline_posted
+        )
+        record["comment"] = comment
 
         try:
             result = client.post_review_comment(number, comment)
@@ -374,6 +448,17 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["any", "high", "medium", "low", "info"],
         help="最高严重度达到该级别才提交评论（any=总是提交；默认 low，info 级只记录不评论）",
     )
+    parser.add_argument(
+        "--no-inline-comments",
+        action="store_true",
+        help="不提交行内评论（只发一条汇总评论）",
+    )
+    parser.add_argument(
+        "--max-inline-comments",
+        type=int,
+        default=0,
+        help="每个 PR 最多几条行内评论（0=默认 3）",
+    )
     parser.add_argument("--include-drafts", action="store_true", help="把草稿 PR 也纳入检视")
     parser.add_argument(
         "--offline-fixture",
@@ -425,11 +510,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         state.save()
 
     print(
-        "完成：open={open} reviewed={reviewed} posted={posted} skipped={skipped} "
-        "report_only={report_only} failed={failed} findings={findings}".format(
+        "完成：open={open} reviewed={reviewed} posted={posted} inline={inline} "
+        "skipped={skipped} report_only={report_only} failed={failed} findings={findings}".format(
             open=run["open_pr_count"],
             reviewed=run["reviewed_count"],
             posted=run["posted_count"],
+            inline=run["inline_total"],
             skipped=run["skipped_count"] + run["draft_count"],
             report_only=run["report_only_count"],
             failed=run["failed_count"],

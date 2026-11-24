@@ -213,6 +213,63 @@ def test_low_finding_posted_by_default(tmp_path):
     assert len(client.posted) == 1
 
 
+def test_low_finding_posts_inline_comment(tmp_path):
+    payload = make_payload(
+        [{"type": "new", "new_line": 7, "line_content": 'printf("debug");'}],
+        path="src/a.c",
+    )
+    fixture = write_fixture(tmp_path / "f.json", [make_pr(112, SHA_A, files_payload=payload)])
+    state = ReviewState(tmp_path / "state.json")
+    client = FixtureClient(fixture)
+
+    run = run_once(_config(tmp_path), client, state)
+
+    assert run["prs"][0]["status"] == "reviewed"
+    assert len(client.posted) == 1  # 汇总评论
+    assert len(client.inline) == 1  # 行内评论
+    assert client.inline[0]["path"] == "src/a.c"
+    assert client.inline[0]["position"] == 7
+    assert "npu-review-inline sha=" in client.inline[0]["body"]
+    assert "行内意见" in client.posted[0]["body"]
+    assert run["inline_total"] == 1
+
+
+def test_inline_comments_can_be_disabled(tmp_path):
+    payload = make_payload(
+        [{"type": "new", "new_line": 7, "line_content": 'printf("debug");'}],
+        path="src/a.c",
+    )
+    fixture = write_fixture(tmp_path / "f.json", [make_pr(113, SHA_A, files_payload=payload)])
+    state = ReviewState(tmp_path / "state.json")
+    client = FixtureClient(fixture)
+    config = _config(tmp_path)
+    config.inline_comments = False
+
+    run = run_once(config, client, state)
+
+    assert run["prs"][0]["status"] == "reviewed"
+    assert len(client.posted) == 1
+    assert client.inline == []
+    assert run["inline_total"] == 0
+
+
+def test_info_only_has_no_inline_comment(tmp_path):
+    payload = make_payload(
+        [{"type": "new", "new_line": 1, "line_content": "int x = 1;"}],
+        path="src/a.c",
+    )
+    fixture = write_fixture(tmp_path / "f.json", [make_pr(114, SHA_A, files_payload=payload)])
+    state = ReviewState(tmp_path / "state.json")
+    client = FixtureClient(fixture)
+
+    run = run_once(_config(tmp_path), client, state)
+
+    assert run["prs"][0]["status"] == "report_only"
+    assert client.posted == []
+    assert client.inline == []
+    assert run["inline_total"] == 0
+
+
 def test_draft_pr_is_skipped_by_default(tmp_path):
     fixture = write_fixture(
         tmp_path / "f.json",

@@ -29,6 +29,45 @@ def contains_marker(comments: List[Dict[str, Any]], head_sha: str) -> bool:
     return False
 
 
+INLINE_MARKER_PREFIX = "npu-review-inline sha="
+
+
+def inline_marker(head_sha: str, file: str, line: int) -> str:
+    return f"<!-- {INLINE_MARKER_PREFIX}{head_sha} file={file} line={line} -->"
+
+
+def contains_inline_marker(
+    comments: List[Dict[str, Any]], marker_text: str
+) -> bool:
+    """判断是否已有同一条行内评论（用于部分失败后的重试去重）。"""
+    if not marker_text:
+        return False
+    for comment in comments or []:
+        if not isinstance(comment, dict):
+            continue
+        body = comment.get("body") or comment.get("content") or ""
+        if marker_text in str(body):
+            return True
+    return False
+
+
+def build_inline_comment(finding: Any, head_sha: str) -> str:
+    origin = "AI" if getattr(finding, "engine", "rules") == "llm" else "规则"
+    lines: List[str] = [
+        f"🤖 **自动检视 · {SEVERITY_LABEL.get(finding.severity, finding.severity)}**",
+        "",
+        finding.message,
+    ]
+    if finding.suggestion:
+        lines.append("")
+        lines.append(f"建议：{finding.suggestion}")
+    lines.append("")
+    lines.append(f"<sub>{origin} · {finding.rule}</sub>")
+    if head_sha:
+        lines.append(inline_marker(head_sha, finding.file, int(finding.line)))
+    return "\n".join(lines).strip() + "\n"
+
+
 def engines_label(engines: List[str]) -> str:
     has_rules = "rules" in engines
     has_llm = "llm" in engines
@@ -46,6 +85,7 @@ def build_comment(
     diff: DiffData,
     result: ReviewResult,
     config: Config,
+    inline_posted: int = 0,
 ) -> str:
     number = pr.get("number", "?")
     head = pr.get("head") if isinstance(pr.get("head"), dict) else {}
@@ -73,6 +113,9 @@ def build_comment(
         f"较低 {counts['low']} · 提示 {counts['info']}（共 {len(result.findings)} 条）"
     )
     lines.append("")
+    if inline_posted > 0:
+        lines.append(f"**行内意见**：已在 {inline_posted} 处代码行留下行内评论。")
+        lines.append("")
 
     if result.summary:
         lines.append(result.summary)

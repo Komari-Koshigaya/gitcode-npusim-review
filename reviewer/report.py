@@ -214,6 +214,11 @@ def _pr_detail_html(record: Dict[str, Any]) -> str:
     body_parts.append(f"<span>变更：+{_esc(record.get('additions', 0))} / −{_esc(record.get('deletions', 0))}</span>")
     body_parts.append(f"<span>引擎：{_esc(engines_label(record.get('engines') or []))}</span>")
     body_parts.append(f"<span>发现：{_esc(len(findings))} 条</span>")
+    if record.get("inline_candidates") or record.get("inline_posted"):
+        body_parts.append(
+            f"<span>行内意见：{_esc(record.get('inline_posted', 0))} / 候选 "
+            f"{_esc(record.get('inline_candidates', 0))}</span>"
+        )
     body_parts.append("</div>")
 
     if record.get("error"):
@@ -282,6 +287,7 @@ def render_run(run: Dict[str, Any]) -> str:
         f'<div class="stat"><div class="k">已提交意见</div><div class="v">{_esc(run.get("posted_count", 0))}</div></div>'
         f'<div class="stat"><div class="k">跳过（无新提交）</div><div class="v">{_esc(run.get("skipped_count", 0))}</div></div>'
         f'<div class="stat"><div class="k">仅报告·未提交</div><div class="v">{_esc(run.get("report_only_count", 0))}</div></div>'
+        f'<div class="stat"><div class="k">行内意见</div><div class="v">{_esc(run.get("inline_total", 0))}</div></div>'
         f'<div class="stat"><div class="k">失败</div><div class="v">{_esc(run.get("failed_count", 0))}</div></div>'
         f'<div class="stat"><div class="k">发现总数</div><div class="v">{_esc(run.get("findings_total", 0))}</div></div>'
         "</div>"
@@ -373,8 +379,9 @@ def render_index(runs: List[Dict[str, Any]]) -> str:
             counts = run.get("severity_counts") or {}
             summary = (
                 f"检视 {run.get('reviewed_count', 0)} · 提交意见 {run.get('posted_count', 0)} · "
-                f"仅报告 {run.get('report_only_count', 0)} · 跳过 {run.get('skipped_count', 0)} · "
-                f"失败 {run.get('failed_count', 0)} · 发现 {run.get('findings_total', 0)}"
+                f"行内 {run.get('inline_total', 0)} · 仅报告 {run.get('report_only_count', 0)} · "
+                f"跳过 {run.get('skipped_count', 0)} · 失败 {run.get('failed_count', 0)} · "
+                f"发现 {run.get('findings_total', 0)}"
             )
             badges = ""
             if run.get("dry_run"):
@@ -409,9 +416,11 @@ def summary_entry(run: Dict[str, Any]) -> Dict[str, Any]:
         "posted_count": run.get("posted_count", 0),
         "skipped_count": run.get("skipped_count", 0),
         "report_only_count": run.get("report_only_count", 0),
+        "inline_total": run.get("inline_total", 0),
         "failed_count": run.get("failed_count", 0),
         "findings_total": run.get("findings_total", 0),
         "severity_counts": run.get("severity_counts", {}),
+        "llm_enabled": bool(run.get("llm_enabled")),
         "dry_run": bool(run.get("dry_run")),
         "file": f'{run.get("date", "")}.html',
     }

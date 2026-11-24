@@ -211,6 +211,36 @@ class GitcodeClient:
             except OSError:
                 pass
 
+    def post_inline_comment(
+        self, number: int, body: str, path: str, position: int
+    ) -> CommandResult:
+        """在具体文件/行上提交行内评论（position 为新版本文件中的行号）。"""
+        fd, tmp = tempfile.mkstemp(prefix="npusim-inline-", suffix=".md")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
+                handle.write(body)
+            return self._run(
+                [
+                    "--no-interactive",
+                    "pr",
+                    "comment",
+                    str(number),
+                    "-R",
+                    self.repo,
+                    "--body-file",
+                    tmp,
+                    "--path",
+                    path,
+                    "--position",
+                    str(int(position)),
+                ]
+            )
+        finally:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+
     def version(self) -> str:
         result = self._run(["version"])
         return (result.stdout or result.stderr).strip()

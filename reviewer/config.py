@@ -68,6 +68,8 @@ class Config:
     # 只有最高严重度达到该阈值时才提交评论；"any" 表示即使无发现也提交。
     # 默认 low：info 级提示（例如"建议补充测试"）只记录到报告，不评论。
     min_severity_to_post: str = "low"
+    inline_comments: bool = True
+    max_inline_comments: int = 3
     llm: LLMConfig = field(default_factory=LLMConfig)
 
     @property
@@ -89,6 +91,11 @@ class Config:
         if min_severity not in {"any", "high", "medium", "low", "info"}:
             min_severity = "low"
 
+        inline_comments = _env_bool("INLINE_COMMENTS", True)
+        if opt("no_inline_comments", False):
+            inline_comments = False
+        max_inline_comments = int(opt("max_inline_comments", 0) or _env_int("MAX_INLINE_COMMENTS", 3))
+
         return cls(
             repo=repo,
             report_dir=report_dir,
@@ -102,6 +109,8 @@ class Config:
             long_line_chars=_env_int("LONG_LINE_CHARS", 200),
             max_findings_in_comment=_env_int("MAX_FINDINGS_IN_COMMENT", 30),
             min_severity_to_post=min_severity,
+            inline_comments=inline_comments,
+            max_inline_comments=max_inline_comments,
             llm=LLMConfig(
                 api_key=_env_str("LLM_API_KEY", ""),
                 base_url=_env_str("LLM_BASE_URL", DEFAULT_LLM_BASE_URL),

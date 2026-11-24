@@ -1,4 +1,9 @@
-from reviewer.comment import contains_marker, marker
+from reviewer.comment import (
+    contains_inline_marker,
+    contains_marker,
+    inline_marker,
+    marker,
+)
 from reviewer.state import ReviewState
 
 
@@ -25,6 +30,17 @@ def test_state_handles_corrupt_file(tmp_path):
     assert state.is_reviewed("cann/npu-simulator", 1, "abc") is False
     state.mark("cann/npu-simulator", 2, "xyz")
     assert state.is_reviewed("cann/npu-simulator", 2, "xyz") is True
+
+
+def test_inline_marker_roundtrip():
+    sha = "a" * 40
+    text = inline_marker(sha, "src/a.c", 7)
+    assert "npu-review-inline sha=" in text
+    assert "file=src/a.c" in text and "line=7" in text
+    comments = [{"body": f"hello\n{text}\nbye"}]
+    assert contains_inline_marker(comments, text) is True
+    assert contains_inline_marker(comments, inline_marker(sha, "src/a.c", 8)) is False
+    assert contains_inline_marker([], text) is False
 
 
 def test_contains_marker_matches_exact_sha():

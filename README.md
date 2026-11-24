@@ -9,6 +9,7 @@
 - 🕘 每天北京时间 09:17 自动运行（也可在 Actions 页手动触发）
 - 🤖 规则检视始终运行；配置 LLM 密钥后叠加 AI 检视
 - 🔁 **双层去重**：同一提交永不重复评论，即使状态丢失或手动重跑
+- 💬 **行内评论**：把 low/medium/high 的问题直接挂到对应代码行（每个 PR 可限额）
 - 📅 报告按日期归档在 `report/`，GitHub Pages 自动发布
 - 🧪 纯标准库 + 完整单元测试，无需额外运行时依赖
 
@@ -79,6 +80,7 @@ gh variable set LLM_MODEL    -R <owner>/<repo> --body "deepseek-chat"
 ```
 
 > `LLM_API_KEY` 未配置时，任务仍会运行，仅使用规则检视，报告会注明。
+> 工作流也接受名为 **`DS_API_KEY`** 的 Secret（DeepSeek）：优先用 `LLM_API_KEY`，否则回退 `DS_API_KEY`。
 
 获取 GitCode Token：登录 GitCode → 个人设置 → 访问令牌 → 新建（授予仓库 PR / 评论相关权限）。
 
@@ -152,6 +154,8 @@ python -m pytest -q
 | `--force-review` | 忽略去重，强制重新检视并评论（人工兜底） |
 | `--max-prs N` | 本次最多处理 N 个 PR（0 使用默认值） |
 | `--min-severity LEVEL` | 达到该严重度才提交评论：`any/high/medium/low/info`，默认 `low` |
+| `--no-inline-comments` | 只发汇总评论，不发代码行内评论 |
+| `--max-inline-comments N` | 每个 PR 最多 N 条行内评论（默认 3） |
 | `--include-drafts` | 连草稿 PR 一起检视 |
 | `--offline-fixture FILE` | 使用离线夹具运行（自动 dry-run） |
 | `--version` | 打印版本 |
@@ -171,6 +175,8 @@ python -m pytest -q
 | `LONG_LINE_CHARS` | `200` | 新增行长度告警阈值 |
 | `MAX_FINDINGS_IN_COMMENT` | `30` | 单条评论最多展开的发现数 |
 | `MIN_SEVERITY_TO_POST` | `low` | 最高严重度达到该级别才提交评论（`info` 级只记录；`any` 表示总是提交） |
+| `INLINE_COMMENTS` | `true` | 是否提交代码行内评论 |
+| `MAX_INLINE_COMMENTS` | `3` | 每个 PR 行内评论上限 |
 | `LLM_API_KEY` | 空 | 配置后启用 AI 检视 |
 | `LLM_BASE_URL` | `https://api.deepseek.com` | OpenAI 风格接口地址 |
 | `LLM_MODEL` | `deepseek-chat` | 模型名 |
