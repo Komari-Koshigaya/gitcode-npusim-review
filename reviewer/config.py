@@ -65,6 +65,8 @@ class Config:
     large_file_lines: int = 800
     long_line_chars: int = 200
     max_findings_in_comment: int = 30
+    # 只有最高严重度达到该阈值时才提交评论；"any" 表示即使无发现也提交。
+    min_severity_to_post: str = "info"
     llm: LLMConfig = field(default_factory=LLMConfig)
 
     @property
@@ -82,6 +84,9 @@ class Config:
         repo = (opt("repo", "") or _env_str("GITCODE_REPO", DEFAULT_REPO)).strip()
         report_dir = Path(opt("report_dir", "") or _env_str("REPORT_DIR", "report"))
         state_file = Path(opt("state_file", "") or _env_str("STATE_FILE", "state/reviews.json"))
+        min_severity = (opt("min_severity", "") or _env_str("MIN_SEVERITY_TO_POST", "info")).strip().lower()
+        if min_severity not in {"any", "high", "medium", "low", "info"}:
+            min_severity = "info"
 
         return cls(
             repo=repo,
@@ -95,6 +100,7 @@ class Config:
             large_file_lines=_env_int("LARGE_FILE_LINES", 800),
             long_line_chars=_env_int("LONG_LINE_CHARS", 200),
             max_findings_in_comment=_env_int("MAX_FINDINGS_IN_COMMENT", 30),
+            min_severity_to_post=min_severity,
             llm=LLMConfig(
                 api_key=_env_str("LLM_API_KEY", ""),
                 base_url=_env_str("LLM_BASE_URL", DEFAULT_LLM_BASE_URL),

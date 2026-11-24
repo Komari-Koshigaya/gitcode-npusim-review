@@ -63,6 +63,67 @@ def test_parse_files_payload_handles_odd_line_numbers():
     assert file.lines[1].new_line is None
 
 
+def test_parse_files_payload_real_gitcode_statistic_shape():
+    payload = {
+        "added_lines": 2,
+        "remove_lines": 1,
+        "count": 1,
+        "diffs": [
+            {
+                "new_blob_id": "abc",
+                "added_lines": 2,
+                "remove_lines": 1,
+                "statistic": {
+                    "type": "text_type",
+                    "path": "docs/a.md",
+                    "old_path": "docs/a.md",
+                    "new_path": "docs/a.md",
+                    "view": False,
+                },
+                "head": {"url": "https://example", "commit_id": "deadbeef"},
+                "content": {
+                    "text": [
+                        {
+                            "type": "match",
+                            "old_line": "...",
+                            "new_line": "...",
+                            "line_content": "@@ -2,7 +2,7 @@",
+                        },
+                        {
+                            "type": None,
+                            "old_line": {"line_num": 2},
+                            "new_line": {"line_num": 2},
+                            "line_content": " ## 概述",
+                        },
+                        {
+                            "type": "new",
+                            "old_line": "...",
+                            "new_line": {"line_num": 3, "line_code": "x"},
+                            "line_content": "+新增",
+                        },
+                        {
+                            "type": "old",
+                            "old_line": {"line_num": 4},
+                            "new_line": "...",
+                            "line_content": "-删除",
+                        },
+                    ]
+                },
+            }
+        ],
+    }
+    diff = parse_files_payload(payload, number=70)
+    file = diff.files[0]
+    assert file.path == "docs/a.md"
+    assert file.new_path == "docs/a.md"
+    assert file.added == 2
+    assert file.removed == 1
+    adds = list(diff.added())
+    assert adds[0][1].new_line == 3
+    assert adds[0][1].text == "新增"  # 前缀 "+" 已剥离
+    assert file.lines[1].text == "## 概述"  # 上下文前缀空格已剥离
+
+
 def test_parse_text_diff_fallback():
     text = (
         "PR #1: t\n"

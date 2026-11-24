@@ -43,6 +43,20 @@ def _settle_risk(rule_risk: str, llm_risk: str) -> str:
     return best
 
 
+_SEVERITY_RANK = {"high": 0, "medium": 1, "low": 2, "info": 3}
+
+
+def _should_post(findings: List[Any], threshold: str) -> bool:
+    """最高严重度达到阈值才提交评论；"any" 表示总是提交。"""
+    threshold = (threshold or "info").lower()
+    if threshold == "any":
+        return True
+    top = highest_severity(findings)
+    if not top:
+        return False
+    return _SEVERITY_RANK.get(top, 99) <= _SEVERITY_RANK.get(threshold, 3)
+
+
 def _combine(rule_result: ReviewResult, llm_result: ReviewResult) -> ReviewResult:
     findings = list(rule_result.findings) + list(llm_result.findings)
     seen = set()
@@ -160,6 +174,7 @@ def run_once(config: Config, client: Any, state: ReviewState) -> Dict[str, Any]:
         "reviewed_count": 0,
         "posted_count": 0,
         "skipped_count": 0,
+        "report_only_count": 0,
         "failed_count": 0,
         "findings_total": 0,
         "severity_counts": {key: 0 for key in SEVERITY_ORDER},
@@ -283,9 +298,20 @@ def run_once(config: Config, client: Any, state: ReviewState) -> Dict[str, Any]:
         comment_pr["head"] = comment_head
         comment = build_comment(comment_pr, diff, combined, config)
         record["comment"] = comment
+        should_post = _should_post(combined.findings, config.min_severity_to_post)
+        record["should_post"] = should_post
 
         if config.dry_run:
-            record["status"] = "dry_run"
+            record["status"] = "dry_run" if should_post else "report_only"
+            if not should_post:
+                run["report_only_count"] += 1
+            run["prs"].append(record)
+            continue
+
+        if not should_post:
+            # 没有达到提交阈值：只写入报告，不评论、不落状态（下次可重新评估）。
+            record["status"] = "report_only"
+            run["report_only_count"] += 1
             run["prs"].append(record)
             continue
 
@@ -342,6 +368,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dry-run", action="store_true", help="只生成报告，不提交评论")
     parser.add_argument("--force-review", action="store_true", help="忽略幂等状态，强制重新检视并评论")
     parser.add_argument("--max-prs", type=int, default=0, help="本次最多处理多少个 PR（0=用默认值）")
+    parser.add_argument(
+        "--min-severity",
+        default=None,
+        choices=["any", "high", "medium", "low", "info"],
+        help="最高严重度达到该级别才提交评论（any=总是提交；默认 info）",
+    )
     parser.add_argument("--include-drafts", action="store_true", help="把草稿 PR 也纳入检视")
     parser.add_argument(
         "--offline-fixture",
@@ -394,11 +426,12 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     print(
         "完成：open={open} reviewed={reviewed} posted={posted} skipped={skipped} "
-        "failed={failed} findings={findings}".format(
+        "report_only={report_only} failed={failed} findings={findings}".format(
             open=run["open_pr_count"],
             reviewed=run["reviewed_count"],
             posted=run["posted_count"],
             skipped=run["skipped_count"] + run["draft_count"],
+            report_only=run["report_only_count"],
             failed=run["failed_count"],
             findings=run["findings_total"],
         )

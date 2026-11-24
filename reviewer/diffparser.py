@@ -58,6 +58,19 @@ class DiffData:
             or name.endswith(("_test.py", "_test.go", "_test.cpp", "_test.cc", ".test.js", ".spec.js"))
         )
 
+    def is_source_file(self, path: str) -> bool:
+        return path.lower().endswith(
+            (
+                ".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh", ".cu", ".cuh",
+                ".py", ".pyx", ".go", ".rs", ".java", ".kt", ".kts", ".js", ".jsx",
+                ".mjs", ".ts", ".tsx", ".m", ".mm", ".cs", ".swift", ".scala",
+                ".rb", ".php", ".lua", ".sh", ".bash",
+            )
+        )
+
+    def is_doc_file(self, path: str) -> bool:
+        return path.lower().endswith((".md", ".rst", ".txt", ".adoc", ".asciidoc"))
+
 
 def _to_int(value: Any) -> Optional[int]:
     if isinstance(value, bool):
@@ -68,7 +81,7 @@ def _to_int(value: Any) -> Optional[int]:
         text = value.strip()
         return int(text) if text.isdigit() else None
     if isinstance(value, dict):
-        for key in ("line", "number", "value", "new_line", "old_line"):
+        for key in ("line_num", "line", "number", "value", "new_line", "old_line"):
             if key in value:
                 found = _to_int(value[key])
                 if found is not None:
@@ -98,39 +111,60 @@ def parse_files_payload(payload: Any, number: int = 0, title: str = "") -> DiffD
     for diff in diffs:
         if not isinstance(diff, dict):
             continue
-        new_path = str(diff.get("new_path") or diff.get("path") or "")
-        old_path = str(diff.get("old_path") or "")
+        # GitCode 当前 files.json 把路径放在 statistic 里（而不是顶层 path 字段）。
+        statistic = diff.get("statistic") if isinstance(diff.get("statistic"), dict) else {}
+        new_path = str(
+            statistic.get("new_path")
+            or diff.get("new_path")
+            or statistic.get("path")
+            or diff.get("path")
+            or ""
+        )
+        old_path = str(statistic.get("old_path") or diff.get("old_path") or "")
+        if not new_path and not old_path:
+            new_path = str(statistic.get("path") or "")
+
         content = diff.get("content") if isinstance(diff.get("content"), dict) else {}
         raw_lines = content.get("text") if isinstance(content, dict) else []
         if not isinstance(raw_lines, list):
             raw_lines = []
 
         lines: List[DiffLine] = []
-        added = removed = 0
+        counted_added = counted_removed = 0
         for item in raw_lines:
             if not isinstance(item, dict):
                 continue
             kind = _kind(item.get("type"))
             if kind == "add":
-                added += 1
+                counted_added += 1
             elif kind == "del":
-                removed += 1
+                counted_removed += 1
+            text = str(item.get("line_content") or "")
+            # line_content 自带 diff 前缀字符（"+" / "-" / " "），去掉后再做规则匹配。
+            if kind == "add" and text.startswith("+"):
+                text = text[1:]
+            elif kind == "del" and text.startswith("-"):
+                text = text[1:]
+            elif kind == "ctx" and text.startswith(" "):
+                text = text[1:]
             lines.append(
                 DiffLine(
-                    text=str(item.get("line_content") or ""),
+                    text=text,
                     old_line=_to_int(item.get("old_line")),
                     new_line=_to_int(item.get("new_line")),
                     kind=kind,
                 )
             )
 
+        file_added = diff.get("added_lines")
+        file_removed = diff.get("remove_lines")
         files.append(
             FileDiff(
                 path=new_path or old_path,
                 old_path=old_path,
                 new_path=new_path,
-                added=added,
-                removed=removed,
+                added=file_added if isinstance(file_added, int) else counted_added,
+                removed=file_removed if isinstance(file_removed, int) else counted_removed,
                 new_file=(not old_path and bool(new_path)),
                 deleted=(bool(old_path) and not new_path),
                 renamed=(bool(old_path) and bool(new_path) and old_path != new_path),

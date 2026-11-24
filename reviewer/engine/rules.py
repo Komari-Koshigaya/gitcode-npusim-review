@@ -103,6 +103,7 @@ def review(diff: DiffData, config: Config) -> ReviewResult:
         text = line.text
         location_line = line.new_line
         generated = _is_generated(file.path)
+        is_doc = diff.is_doc_file(file.path)
 
         if _SECRET_ASSIGN.search(text) or _SECRET_AWS.search(text) or _SECRET_PEM.search(text) or _SECRET_BEARER.search(text):
             add(
@@ -171,7 +172,7 @@ def review(diff: DiffData, config: Config) -> ReviewResult:
                 "请确认是否应在本 PR 内处理，或关联对应 Issue。",
             )
 
-        if not generated and config.long_line_chars > 0 and len(text) > config.long_line_chars:
+        if not generated and not is_doc and config.long_line_chars > 0 and len(text) > config.long_line_chars:
             add(
                 "long-line",
                 "low",
@@ -203,7 +204,11 @@ def review(diff: DiffData, config: Config) -> ReviewResult:
                 "",
                 "建议拆分为更小的 PR，便于评审与回归。",
             )
-        if not diff.is_test_file(file.path) and (file.added > 0 or file.removed > 0):
+        if (
+            diff.is_source_file(file.path)
+            and not diff.is_test_file(file.path)
+            and (file.added > 0 or file.removed > 0)
+        ):
             changed_code = True
         if diff.is_test_file(file.path) and (file.added > 0 or file.removed > 0):
             changed_tests = True

@@ -81,6 +81,18 @@ def test_missing_tests_reported_only_without_test_changes():
     assert "missing-tests" not in rules_hit(with_tests)
 
 
+def test_docs_long_line_is_ignored():
+    docs = make_file("docs/guide.md", [("add", "长" * 300)])
+    result = rules.review(DiffData(files=[docs]), Config())
+    assert "long-line" not in rules_hit(result)
+
+
+def test_docs_change_does_not_trigger_missing_tests():
+    docs = make_file("docs/guide.md", [("add", "hello")])
+    result = rules.review(DiffData(files=[docs]), Config())
+    assert "missing-tests" not in rules_hit(result)
+
+
 def test_empty_diff_yields_no_findings():
     result = rules.review(DiffData(files=[]), Config())
     assert result.findings == []

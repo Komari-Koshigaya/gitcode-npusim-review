@@ -44,7 +44,16 @@ GitHub Actions (每天 09:17)
    这样即使 `state/` 丢失、换了 runner 或手动重跑，也不会重复发送。
 
 只有 **PR 产生了新提交（head SHA 变化）** 才会重新检视并发表评论。
-报告里会把「本次已检视」「无新提交·跳过」「已检视过·跳过」「草稿·跳过」「提交失败」分开标注。
+报告里会把「本次已检视」「无新提交·跳过」「已检视过·跳过」「草稿·跳过」「仅报告·未提交」「提交失败」分开标注。
+
+### 提交策略（避免无意义评论）
+
+默认只有出现**至少一条发现**（`info` 及以上）时才提交评论；零发现的 PR 只写入报告、不评论，
+也不落去重状态（下次仍可重新评估）。可用 `MIN_SEVERITY_TO_POST` / `--min-severity` 调整：
+
+- `info`（默认）：有任何发现就评论；
+- `low` / `medium` / `high`：只有达到该严重度才评论（更克制）；
+- `any`：即使没有发现也评论（每个 PR 都留痕）。
 
 ---
 
@@ -140,6 +149,7 @@ python -m pytest -q
 | `--dry-run` | 只生成报告，不提交评论 |
 | `--force-review` | 忽略去重，强制重新检视并评论（人工兜底） |
 | `--max-prs N` | 本次最多处理 N 个 PR（0 使用默认值） |
+| `--min-severity LEVEL` | 达到该严重度才提交评论：`any/high/medium/low/info`，默认 `info` |
 | `--include-drafts` | 连草稿 PR 一起检视 |
 | `--offline-fixture FILE` | 使用离线夹具运行（自动 dry-run） |
 | `--version` | 打印版本 |
@@ -158,6 +168,7 @@ python -m pytest -q
 | `LARGE_FILE_LINES` | `800` | 单文件改动行数告警阈值 |
 | `LONG_LINE_CHARS` | `200` | 新增行长度告警阈值 |
 | `MAX_FINDINGS_IN_COMMENT` | `30` | 单条评论最多展开的发现数 |
+| `MIN_SEVERITY_TO_POST` | `info` | 最高严重度达到该级别才提交评论（`any` 表示总是提交） |
 | `LLM_API_KEY` | 空 | 配置后启用 AI 检视 |
 | `LLM_BASE_URL` | `https://api.deepseek.com` | OpenAI 风格接口地址 |
 | `LLM_MODEL` | `deepseek-chat` | 模型名 |
@@ -180,7 +191,9 @@ python -m pytest -q
 | `large-change` | 提示 | 单文件改动过大 |
 | `missing-tests` | 提示 | 改了代码但没改测试 |
 
-> 生成物 / 锁文件（如 `package-lock.json`、`*.min.js`、`go.sum`）会跳过低价值检查，降低噪声。
+> - 生成物 / 锁文件（如 `package-lock.json`、`*.min.js`、`go.sum`）会跳过低价值检查。
+> - 文档（`.md` / `.rst` / `.txt`）不检查行长；`missing-tests` 只针对源码文件（`.c/.cpp/.py/.go/...`），
+>   避免对纯文档 / CI 改动产生噪声。
 
 LLM 检视的发现会以 `engine=llm` 单独标注；AI 调用失败时自动降级为仅规则，**不会让整次任务失败**。
 

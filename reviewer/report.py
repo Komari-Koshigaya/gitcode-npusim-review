@@ -18,6 +18,7 @@ STATUS_STYLE: Dict[str, tuple] = {
     "skipped_existing": ("已检视过·跳过", "b-gray"),
     "draft_skipped": ("草稿·跳过", "b-gray"),
     "truncated": ("超出上限·未处理", "b-gray"),
+    "report_only": ("无实质发现·未提交", "b-gray"),
     "failed": ("提交失败", "b-red"),
 }
 
@@ -280,6 +281,7 @@ def render_run(run: Dict[str, Any]) -> str:
         f'<div class="stat"><div class="k">本次检视</div><div class="v">{_esc(run.get("reviewed_count", 0))}</div></div>'
         f'<div class="stat"><div class="k">已提交意见</div><div class="v">{_esc(run.get("posted_count", 0))}</div></div>'
         f'<div class="stat"><div class="k">跳过（无新提交）</div><div class="v">{_esc(run.get("skipped_count", 0))}</div></div>'
+        f'<div class="stat"><div class="k">仅报告·未提交</div><div class="v">{_esc(run.get("report_only_count", 0))}</div></div>'
         f'<div class="stat"><div class="k">失败</div><div class="v">{_esc(run.get("failed_count", 0))}</div></div>'
         f'<div class="stat"><div class="k">发现总数</div><div class="v">{_esc(run.get("findings_total", 0))}</div></div>'
         "</div>"
@@ -371,8 +373,8 @@ def render_index(runs: List[Dict[str, Any]]) -> str:
             counts = run.get("severity_counts") or {}
             summary = (
                 f"检视 {run.get('reviewed_count', 0)} · 提交意见 {run.get('posted_count', 0)} · "
-                f"跳过 {run.get('skipped_count', 0)} · 失败 {run.get('failed_count', 0)} · "
-                f"发现 {run.get('findings_total', 0)}"
+                f"仅报告 {run.get('report_only_count', 0)} · 跳过 {run.get('skipped_count', 0)} · "
+                f"失败 {run.get('failed_count', 0)} · 发现 {run.get('findings_total', 0)}"
             )
             badges = ""
             if run.get("dry_run"):
@@ -406,6 +408,7 @@ def summary_entry(run: Dict[str, Any]) -> Dict[str, Any]:
         "reviewed_count": run.get("reviewed_count", 0),
         "posted_count": run.get("posted_count", 0),
         "skipped_count": run.get("skipped_count", 0),
+        "report_only_count": run.get("report_only_count", 0),
         "failed_count": run.get("failed_count", 0),
         "findings_total": run.get("findings_total", 0),
         "severity_counts": run.get("severity_counts", {}),
