@@ -372,7 +372,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--min-severity",
         default=None,
         choices=["any", "high", "medium", "low", "info"],
-        help="最高严重度达到该级别才提交评论（any=总是提交；默认 info）",
+        help="最高严重度达到该级别才提交评论（any=总是提交；默认 low，info 级只记录不评论）",
     )
     parser.add_argument("--include-drafts", action="store_true", help="把草稿 PR 也纳入检视")
     parser.add_argument(

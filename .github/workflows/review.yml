@@ -10,6 +10,10 @@ on:
         description: "只生成报告，不向 GitCode 提交评论"
         type: boolean
         default: false
+      force_review:
+        description: "忽略去重状态强制重新检视（仍遵守严重度阈值）"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -49,7 +53,7 @@ jobs:
           gitcode version
 
       - name: Run reviewer
-        run: python -m reviewer --repo "$GITCODE_REPO"
+        run: python -m reviewer --repo "$GITCODE_REPO" ${{ inputs.force_review && '--force-review' || '' }}
 
       - name: Upload dry-run report
         if: ${{ inputs.dry_run }}

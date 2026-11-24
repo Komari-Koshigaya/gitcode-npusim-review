@@ -15,7 +15,7 @@ from tests.support import (
 )
 
 
-def _config(tmp_path, dry_run=False, min_severity="info"):
+def _config(tmp_path, dry_run=False, min_severity="low"):
     return Config(
         repo=REPO,
         report_dir=tmp_path,
@@ -166,7 +166,7 @@ def test_docs_only_pr_is_report_only(tmp_path):
     assert state.get(REPO, 108) is None
 
 
-def test_info_only_posted_by_default(tmp_path):
+def test_info_only_report_only_by_default(tmp_path):
     payload = make_payload(
         [{"type": "new", "new_line": 1, "line_content": "int x = 1;"}],
         path="src/a.c",
@@ -175,13 +175,15 @@ def test_info_only_posted_by_default(tmp_path):
     state = ReviewState(tmp_path / "state.json")
     client = FixtureClient(fixture)
 
-    run = run_once(_config(tmp_path), client, state)  # 默认 min_severity=info
+    run = run_once(_config(tmp_path), client, state)  # 默认 min_severity=low：info 不评论
 
-    assert run["prs"][0]["status"] == "reviewed"
-    assert len(client.posted) == 1
+    assert run["prs"][0]["status"] == "report_only"
+    assert run["report_only_count"] == 1
+    assert client.posted == []
+    assert state.get(REPO, 109) is None
 
 
-def test_info_only_skipped_when_threshold_low(tmp_path):
+def test_info_only_posted_when_threshold_info(tmp_path):
     payload = make_payload(
         [{"type": "new", "new_line": 1, "line_content": "int x = 1;"}],
         path="src/a.c",
@@ -190,10 +192,25 @@ def test_info_only_skipped_when_threshold_low(tmp_path):
     state = ReviewState(tmp_path / "state.json")
     client = FixtureClient(fixture)
 
-    run = run_once(_config(tmp_path, min_severity="low"), client, state)
+    run = run_once(_config(tmp_path, min_severity="info"), client, state)
 
-    assert run["prs"][0]["status"] == "report_only"
-    assert client.posted == []
+    assert run["prs"][0]["status"] == "reviewed"
+    assert len(client.posted) == 1
+
+
+def test_low_finding_posted_by_default(tmp_path):
+    payload = make_payload(
+        [{"type": "new", "new_line": 1, "line_content": 'printf("debug");'}],
+        path="src/a.c",
+    )
+    fixture = write_fixture(tmp_path / "f.json", [make_pr(111, SHA_A, files_payload=payload)])
+    state = ReviewState(tmp_path / "state.json")
+    client = FixtureClient(fixture)
+
+    run = run_once(_config(tmp_path), client, state)  # low（debug-print）应提交
+
+    assert run["prs"][0]["status"] == "reviewed"
+    assert len(client.posted) == 1
 
 
 def test_draft_pr_is_skipped_by_default(tmp_path):

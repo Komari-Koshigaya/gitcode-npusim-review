@@ -66,7 +66,8 @@ class Config:
     long_line_chars: int = 200
     max_findings_in_comment: int = 30
     # 只有最高严重度达到该阈值时才提交评论；"any" 表示即使无发现也提交。
-    min_severity_to_post: str = "info"
+    # 默认 low：info 级提示（例如"建议补充测试"）只记录到报告，不评论。
+    min_severity_to_post: str = "low"
     llm: LLMConfig = field(default_factory=LLMConfig)
 
     @property
@@ -84,9 +85,9 @@ class Config:
         repo = (opt("repo", "") or _env_str("GITCODE_REPO", DEFAULT_REPO)).strip()
         report_dir = Path(opt("report_dir", "") or _env_str("REPORT_DIR", "report"))
         state_file = Path(opt("state_file", "") or _env_str("STATE_FILE", "state/reviews.json"))
-        min_severity = (opt("min_severity", "") or _env_str("MIN_SEVERITY_TO_POST", "info")).strip().lower()
+        min_severity = (opt("min_severity", "") or _env_str("MIN_SEVERITY_TO_POST", "low")).strip().lower()
         if min_severity not in {"any", "high", "medium", "low", "info"}:
-            min_severity = "info"
+            min_severity = "low"
 
         return cls(
             repo=repo,

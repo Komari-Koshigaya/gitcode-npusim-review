@@ -48,11 +48,13 @@ GitHub Actions (每天 09:17)
 
 ### 提交策略（避免无意义评论）
 
-默认只有出现**至少一条发现**（`info` 及以上）时才提交评论；零发现的 PR 只写入报告、不评论，
+默认只有出现 **`low` 及以上**（较低 / 中等 / 严重）的**实质问题**时才提交评论；
+`info` 级提示（例如“建议补充测试”）以及零发现的 PR **只写入报告、不评论**，
 也不落去重状态（下次仍可重新评估）。可用 `MIN_SEVERITY_TO_POST` / `--min-severity` 调整：
 
-- `info`（默认）：有任何发现就评论；
-- `low` / `medium` / `high`：只有达到该严重度才评论（更克制）；
+- `low`（默认）：只有 low/medium/high 的发现才评论；
+- `medium` / `high`：更克制，只对较严重问题评论；
+- `info`：info 级提示也评论；
 - `any`：即使没有发现也评论（每个 PR 都留痕）。
 
 ---
@@ -149,7 +151,7 @@ python -m pytest -q
 | `--dry-run` | 只生成报告，不提交评论 |
 | `--force-review` | 忽略去重，强制重新检视并评论（人工兜底） |
 | `--max-prs N` | 本次最多处理 N 个 PR（0 使用默认值） |
-| `--min-severity LEVEL` | 达到该严重度才提交评论：`any/high/medium/low/info`，默认 `info` |
+| `--min-severity LEVEL` | 达到该严重度才提交评论：`any/high/medium/low/info`，默认 `low` |
 | `--include-drafts` | 连草稿 PR 一起检视 |
 | `--offline-fixture FILE` | 使用离线夹具运行（自动 dry-run） |
 | `--version` | 打印版本 |
@@ -168,7 +170,7 @@ python -m pytest -q
 | `LARGE_FILE_LINES` | `800` | 单文件改动行数告警阈值 |
 | `LONG_LINE_CHARS` | `200` | 新增行长度告警阈值 |
 | `MAX_FINDINGS_IN_COMMENT` | `30` | 单条评论最多展开的发现数 |
-| `MIN_SEVERITY_TO_POST` | `info` | 最高严重度达到该级别才提交评论（`any` 表示总是提交） |
+| `MIN_SEVERITY_TO_POST` | `low` | 最高严重度达到该级别才提交评论（`info` 级只记录；`any` 表示总是提交） |
 | `LLM_API_KEY` | 空 | 配置后启用 AI 检视 |
 | `LLM_BASE_URL` | `https://api.deepseek.com` | OpenAI 风格接口地址 |
 | `LLM_MODEL` | `deepseek-chat` | 模型名 |
