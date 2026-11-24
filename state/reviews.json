@@ -1,43 +1,4 @@
 {
-  "repos": {
-    "cann/npu-simulator": {
-      "60": {
-        "engines": [
-          "rules"
-        ],
-        "findings_count": 1,
-        "head_sha": "a2b8e1189e54d9543312ea78aecf8bd2e3bc455f",
-        "reviewed_at": "2026-11-24T22:39:42+08:00",
-        "severity": "info"
-      },
-      "73": {
-        "engines": [
-          "rules"
-        ],
-        "findings_count": 1,
-        "head_sha": "edac0ff3a4db657db96cb4ccada1e75b3cdb8f0d",
-        "reviewed_at": "2026-11-24T22:39:42+08:00",
-        "severity": "info"
-      },
-      "74": {
-        "engines": [
-          "rules"
-        ],
-        "findings_count": 1,
-        "head_sha": "3ff8d6045751c73a562ca1684a03914eb0034503",
-        "reviewed_at": "2026-11-24T22:39:42+08:00",
-        "severity": "info"
-      },
-      "76": {
-        "engines": [
-          "rules"
-        ],
-        "findings_count": 1,
-        "head_sha": "b0f33b9147df54d50a6dc844462f892b7e492ce6",
-        "reviewed_at": "2026-11-24T22:39:42+08:00",
-        "severity": "info"
-      }
-    }
-  },
+  "repos": {},
   "version": 1
 }
