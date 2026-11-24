@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "date": "2026-11-24",
+    "generated_at": "2026-11-24T22:39:42+08:00",
+    "generated_at_display": "2026-11-24 22:39:42 +0800",
+    "repo": "cann/npu-simulator",
+    "open_pr_count": 10,
+    "reviewed_count": 10,
+    "posted_count": 4,
+    "skipped_count": 0,
+    "report_only_count": 6,
+    "failed_count": 0,
+    "findings_total": 4,
+    "severity_counts": {
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 4
+    },
+    "dry_run": false,
+    "file": "2026-11-24.html"
+  }
+]
