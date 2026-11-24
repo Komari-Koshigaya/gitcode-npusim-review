@@ -1,4 +1,6 @@
 {
-  "repos": {},
+  "repos": {
+    "cann/npu-simulator": {}
+  },
   "version": 1
 }
