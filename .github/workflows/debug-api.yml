@@ -15,45 +15,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Inspect files.json shape
+      - name: Inspect full diff object
         run: |
           pip install gitcode-cli==0.13.0 >/dev/null
           python - <<'PY'
           import json, os, subprocess
           env = {**os.environ, "GC_TOKEN": os.environ["GITCODE_TOKEN"], "CI": "true", "GC_NO_UPDATE_CHECK": "1"}
           r = subprocess.run(["gitcode", "api", "repos/cann/npu-simulator/pulls/70/files.json"], capture_output=True, text=True, env=env)
-          print("rc", r.returncode)
-          print("stderr", (r.stderr or "")[:300])
-          try:
-              data = json.loads(r.stdout)
-          except Exception as e:
-              print("json error", e)
-              print(r.stdout[:500])
-              raise SystemExit
-          print("top type", type(data).__name__)
-          if isinstance(data, dict):
-              print("top keys", list(data.keys()))
-              diffs = data.get("diffs")
-              if diffs is None and isinstance(data.get("data"), dict):
-                  print("data keys", list(data["data"].keys()))
-                  diffs = data["data"].get("diffs")
-          else:
-              diffs = data
-          diffs = diffs or []
-          print("diffs len", len(diffs))
-          if diffs:
-              d = diffs[0]
-              print("diff0 type", type(d).__name__)
-              if isinstance(d, dict):
-                  print("diff0 keys", list(d.keys()))
-                  print("path fields", {k: d.get(k) for k in ("path", "new_path", "old_path", "type")})
-                  c = d.get("content")
-                  print("content type", type(c).__name__)
-                  if isinstance(c, dict):
-                      print("content keys", list(c.keys()))
-                      t = c.get("text") or []
-                      print("text len", len(t))
-                      if t:
-                          print("line0 meta", {k: t[0].get(k) for k in ("type", "old_line", "new_line")})
-                          print("line0 content", str(t[0].get("line_content"))[:40])
+          data = json.loads(r.stdout)
+          diffs = data.get("diffs") or []
+          print("diffs", len(diffs))
+          for idx, d in enumerate(diffs):
+              trimmed = {k: v for k, v in d.items() if k != "content"}
+              text = (d.get("content") or {}).get("text") or []
+              trimmed["content_text_sample"] = [
+                  {k: line.get(k) for k in ("type", "old_line", "new_line")} | {"line": str(line.get("line_content"))[:50]}
+                  for line in text[:3]
+              ]
+              print(f"--- diff {idx} ---")
+              print(json.dumps(trimmed, ensure_ascii=False, indent=2)[:1600])
           PY
