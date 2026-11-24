@@ -1,5 +1,6 @@
 from reviewer.comment import (
     contains_inline_marker,
+    contains_inline_sha,
     contains_marker,
     inline_marker,
     marker,
@@ -41,6 +42,14 @@ def test_inline_marker_roundtrip():
     assert contains_inline_marker(comments, text) is True
     assert contains_inline_marker(comments, inline_marker(sha, "src/a.c", 8)) is False
     assert contains_inline_marker([], text) is False
+
+
+def test_contains_inline_sha_matches_submission():
+    sha = "a" * 40
+    comments = [{"body": inline_marker(sha, "src/a.c", 3)}]
+    assert contains_inline_sha(comments, sha) is True
+    assert contains_inline_sha(comments, "b" * 40) is False
+    assert contains_inline_sha([], sha) is False
 
 
 def test_contains_marker_matches_exact_sha():

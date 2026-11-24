@@ -16,6 +16,7 @@ from .comment import (
     build_comment,
     build_inline_comment,
     contains_inline_marker,
+    contains_inline_sha,
     contains_marker,
     inline_marker,
 )
@@ -281,7 +282,9 @@ def run_once(config: Config, client: Any, state: ReviewState) -> Dict[str, Any]:
                 existing_comments = client.list_comments(number)
             except Exception:  # noqa: BLE001 - 读取失败不阻断
                 existing_comments = []
-            if contains_marker(existing_comments, key):
+            if contains_marker(existing_comments, key) or contains_inline_sha(
+                existing_comments, key
+            ):
                 record["status"] = "skipped_existing"
                 run["skipped_count"] += 1
                 if not config.dry_run:
@@ -358,8 +361,9 @@ def run_once(config: Config, client: Any, state: ReviewState) -> Dict[str, Any]:
             run["prs"].append(record)
             continue
 
-        # 先在具体代码行提交行内意见（各带独立标记，单条失败不阻断总评论）
+        # 先在具体代码行提交行内意见（各带独立标记，单条失败不阻断）
         inline_posted = 0
+        inline_failed = 0
         for finding in inline_candidates:
             marker_text = inline_marker(key, finding.file, int(finding.line))
             if contains_inline_marker(existing_comments, marker_text):
@@ -370,6 +374,7 @@ def run_once(config: Config, client: Any, state: ReviewState) -> Dict[str, Any]:
                     number, body, finding.file, int(finding.line)
                 )
             except Exception as exc:  # noqa: BLE001
+                inline_failed += 1
                 record["warnings"].append(
                     f"行内评论失败（{finding.file}:{finding.line}）：{exc}"
                 )
@@ -378,43 +383,57 @@ def run_once(config: Config, client: Any, state: ReviewState) -> Dict[str, Any]:
                 inline_posted += 1
                 existing_comments.append({"body": body})
             else:
+                inline_failed += 1
                 record["warnings"].append(
                     f"行内评论失败（{finding.file}:{finding.line}）：{inline_result.error_summary}"
                 )
         record["inline_posted"] = inline_posted
         run["inline_total"] += inline_posted
+        inline_meta = dict(
+            reviewed_at=generated_at,
+            severity=combined.risk_level,
+            findings_count=len(combined.findings),
+            engines=combined.engines,
+            inline_posted=inline_posted,
+        )
 
+        # 汇总评论默认不提交（只写本地报告）；需要时用 --summary-comment / POST_SUMMARY_COMMENT=1
         comment = build_comment(
             comment_pr, diff, combined, config, inline_posted=inline_posted
         )
         record["comment"] = comment
 
-        try:
-            result = client.post_review_comment(number, comment)
-        except Exception as exc:  # noqa: BLE001
-            record["status"] = "failed"
-            record["error"] = f"提交评论异常：{exc}"
-            run["failed_count"] += 1
-            run["prs"].append(record)
-            continue
-
-        if result.ok:
+        if config.summary_comment:
+            try:
+                result = client.post_review_comment(number, comment)
+            except Exception as exc:  # noqa: BLE001
+                record["status"] = "failed"
+                record["error"] = f"提交汇总评论异常：{exc}"
+                run["failed_count"] += 1
+                run["prs"].append(record)
+                continue
+            if result.ok:
+                record["status"] = "reviewed"
+                run["posted_count"] += 1
+                if key:
+                    state.mark(config.repo, number, key, **inline_meta)
+            else:
+                record["status"] = "failed"
+                record["error"] = f"提交汇总评论失败：{result.error_summary}"
+                run["failed_count"] += 1
+        elif inline_posted > 0:
             record["status"] = "reviewed"
             run["posted_count"] += 1
             if key:
-                state.mark(
-                    config.repo,
-                    number,
-                    key,
-                    reviewed_at=generated_at,
-                    severity=combined.risk_level,
-                    findings_count=len(combined.findings),
-                    engines=combined.engines,
-                )
-        else:
+                state.mark(config.repo, number, key, **inline_meta)
+        elif inline_candidates and inline_failed > 0:
             record["status"] = "failed"
-            record["error"] = f"提交评论失败：{result.error_summary}"
+            record["error"] = f"行内评论全部失败（{inline_failed} 条）"
             run["failed_count"] += 1
+        else:
+            # 有发现但没有可挂载的代码行：只记录报告
+            record["status"] = "report_only"
+            run["report_only_count"] += 1
         run["prs"].append(record)
 
     counts = {key: 0 for key in SEVERITY_ORDER}
@@ -458,6 +477,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=0,
         help="每个 PR 最多几条行内评论（0=默认 3）",
+    )
+    parser.add_argument(
+        "--summary-comment",
+        action="store_true",
+        help="同时提交一条汇总评论（默认只发行内评论，汇总只写报告）",
     )
     parser.add_argument("--include-drafts", action="store_true", help="把草稿 PR 也纳入检视")
     parser.add_argument(

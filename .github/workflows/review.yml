@@ -30,6 +30,8 @@ jobs:
       TZ: Asia/Shanghai
       REPORT_TZ_OFFSET_HOURS: "8"
       GITCODE_REPO: cann/npu-simulator
+      # 默认只发行内评论；改为 "true" 可额外发一条汇总评论
+      POST_SUMMARY_COMMENT: "false"
       GITCODE_TOKEN: ${{ secrets.GITCODE_TOKEN }}
       # 支持 DS_API_KEY（DeepSeek）或 LLM_API_KEY（通用）
       LLM_API_KEY: ${{ secrets.LLM_API_KEY || secrets.DS_API_KEY }}

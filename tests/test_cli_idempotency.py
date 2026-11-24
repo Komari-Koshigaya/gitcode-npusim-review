@@ -72,7 +72,7 @@ def test_layer2_existing_marker_prevents_duplicate(tmp_path):
     assert state.get(REPO, 102)["source"] == "comment-marker"
 
 
-def test_fresh_pr_posts_once_then_skips_on_rerun(tmp_path):
+def test_fresh_pr_posts_inline_once_then_skips_on_rerun(tmp_path):
     fixture = write_fixture(
         tmp_path / "f.json",
         [make_pr(103, SHA_C, files_payload=_payload_with_secret())],
@@ -83,8 +83,9 @@ def test_fresh_pr_posts_once_then_skips_on_rerun(tmp_path):
 
     first = run_once(config, client, state)
     assert first["prs"][0]["status"] == "reviewed"
-    assert len(client.posted) == 1
-    assert f"npu-review sha={SHA_C}" in client.posted[0]["body"]
+    assert client.posted == []  # 默认不发汇总评论
+    assert len(client.inline) == 1
+    assert f"npu-review-inline sha={SHA_C}" in client.inline[0]["body"]
     state.save()
 
     # 第二次运行：状态已持久化，同一 SHA 直接跳过
@@ -92,7 +93,7 @@ def test_fresh_pr_posts_once_then_skips_on_rerun(tmp_path):
     state2 = ReviewState(tmp_path / "state.json")
     second = run_once(config, client2, state2)
     assert second["prs"][0]["status"] == "unchanged"
-    assert client2.posted == []
+    assert client2.inline == []
     assert second["posted_count"] == 0
 
 
@@ -108,7 +109,8 @@ def test_new_sha_on_same_pr_is_reviewed_again(tmp_path):
     run = run_once(_config(tmp_path), client, state)
 
     assert run["prs"][0]["status"] == "reviewed"
-    assert len(client.posted) == 1
+    assert len(client.inline) == 1
+    assert client.posted == []
 
 
 def test_dry_run_does_not_post_or_mark(tmp_path):
@@ -183,7 +185,7 @@ def test_info_only_report_only_by_default(tmp_path):
     assert state.get(REPO, 109) is None
 
 
-def test_info_only_posted_when_threshold_info(tmp_path):
+def test_info_only_summary_posted_when_enabled(tmp_path):
     payload = make_payload(
         [{"type": "new", "new_line": 1, "line_content": "int x = 1;"}],
         path="src/a.c",
@@ -191,14 +193,16 @@ def test_info_only_posted_when_threshold_info(tmp_path):
     fixture = write_fixture(tmp_path / "f.json", [make_pr(110, SHA_A, files_payload=payload)])
     state = ReviewState(tmp_path / "state.json")
     client = FixtureClient(fixture)
+    config = _config(tmp_path, min_severity="info")
+    config.summary_comment = True
 
-    run = run_once(_config(tmp_path, min_severity="info"), client, state)
+    run = run_once(config, client, state)
 
     assert run["prs"][0]["status"] == "reviewed"
-    assert len(client.posted) == 1
+    assert len(client.posted) == 1  # 汇总评论（info 全局发现无行内位置）
 
 
-def test_low_finding_posted_by_default(tmp_path):
+def test_low_finding_posts_inline_by_default(tmp_path):
     payload = make_payload(
         [{"type": "new", "new_line": 1, "line_content": 'printf("debug");'}],
         path="src/a.c",
@@ -207,10 +211,11 @@ def test_low_finding_posted_by_default(tmp_path):
     state = ReviewState(tmp_path / "state.json")
     client = FixtureClient(fixture)
 
-    run = run_once(_config(tmp_path), client, state)  # low（debug-print）应提交
+    run = run_once(_config(tmp_path), client, state)  # low（debug-print）应发行内
 
     assert run["prs"][0]["status"] == "reviewed"
-    assert len(client.posted) == 1
+    assert len(client.inline) == 1
+    assert client.posted == []
 
 
 def test_low_finding_posts_inline_comment(tmp_path):
@@ -225,16 +230,16 @@ def test_low_finding_posts_inline_comment(tmp_path):
     run = run_once(_config(tmp_path), client, state)
 
     assert run["prs"][0]["status"] == "reviewed"
-    assert len(client.posted) == 1  # 汇总评论
+    assert client.posted == []  # 汇总只写报告，不提交
     assert len(client.inline) == 1  # 行内评论
     assert client.inline[0]["path"] == "src/a.c"
     assert client.inline[0]["position"] == 7
     assert "npu-review-inline sha=" in client.inline[0]["body"]
-    assert "行内意见" in client.posted[0]["body"]
+    assert "行内意见" in run["prs"][0]["comment"]
     assert run["inline_total"] == 1
 
 
-def test_inline_comments_can_be_disabled(tmp_path):
+def test_inline_disabled_and_summary_off_is_report_only(tmp_path):
     payload = make_payload(
         [{"type": "new", "new_line": 7, "line_content": 'printf("debug");'}],
         path="src/a.c",
@@ -247,10 +252,53 @@ def test_inline_comments_can_be_disabled(tmp_path):
 
     run = run_once(config, client, state)
 
-    assert run["prs"][0]["status"] == "reviewed"
-    assert len(client.posted) == 1
+    assert run["prs"][0]["status"] == "report_only"
+    assert client.posted == []
     assert client.inline == []
     assert run["inline_total"] == 0
+
+
+def test_summary_comment_enabled_posts_summary(tmp_path):
+    payload = make_payload(
+        [{"type": "new", "new_line": 7, "line_content": 'printf("debug");'}],
+        path="src/a.c",
+    )
+    fixture = write_fixture(tmp_path / "f.json", [make_pr(116, SHA_A, files_payload=payload)])
+    state = ReviewState(tmp_path / "state.json")
+    client = FixtureClient(fixture)
+    config = _config(tmp_path)
+    config.summary_comment = True
+
+    run = run_once(config, client, state)
+
+    assert run["prs"][0]["status"] == "reviewed"
+    assert len(client.posted) == 1  # 汇总评论
+    assert len(client.inline) == 1  # 行内评论仍会发
+
+
+def test_layer2_inline_marker_prevents_duplicate(tmp_path):
+    inline_comment = {
+        "body": f"历史行内\n<!-- npu-review-inline sha={SHA_B} file=src/a.c line=3 -->\n"
+    }
+    fixture = write_fixture(
+        tmp_path / "f.json",
+        [
+            make_pr(
+                115,
+                SHA_B,
+                files_payload=_payload_with_secret(),
+                comments=[inline_comment],
+            )
+        ],
+    )
+    state = ReviewState(tmp_path / "state.json")
+    client = FixtureClient(fixture)
+
+    run = run_once(_config(tmp_path), client, state)
+
+    assert run["prs"][0]["status"] == "skipped_existing"
+    assert client.posted == []
+    assert client.inline == []
 
 
 def test_info_only_has_no_inline_comment(tmp_path):

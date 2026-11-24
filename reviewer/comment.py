@@ -51,6 +51,20 @@ def contains_inline_marker(
     return False
 
 
+def contains_inline_sha(comments: List[Dict[str, Any]], head_sha: str) -> bool:
+    """判断是否已有针对该提交的任意行内评论（用于去重，不依赖汇总评论标记）。"""
+    if not head_sha:
+        return False
+    needle = f"{INLINE_MARKER_PREFIX}{head_sha}"
+    for comment in comments or []:
+        if not isinstance(comment, dict):
+            continue
+        body = comment.get("body") or comment.get("content") or ""
+        if needle in str(body):
+            return True
+    return False
+
+
 def build_inline_comment(finding: Any, head_sha: str) -> str:
     origin = "AI" if getattr(finding, "engine", "rules") == "llm" else "规则"
     lines: List[str] = [

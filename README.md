@@ -9,7 +9,7 @@
 - 🕘 每天北京时间 09:17 自动运行（也可在 Actions 页手动触发）
 - 🤖 规则检视始终运行；配置 LLM 密钥后叠加 AI 检视
 - 🔁 **双层去重**：同一提交永不重复评论，即使状态丢失或手动重跑
-- 💬 **行内评论**：把 low/medium/high 的问题直接挂到对应代码行（每个 PR 可限额）
+- 💬 **行内评论**：GitCode 上只把 low/medium/high 的问题挂到对应代码行；完整汇总只写入 HTML 报告，不发汇总评论
 - 📅 报告按日期归档在 `report/`，GitHub Pages 自动发布
 - 🧪 纯标准库 + 完整单元测试，无需额外运行时依赖
 
@@ -51,7 +51,12 @@ GitHub Actions (每天 09:17)
 
 默认只有出现 **`low` 及以上**（较低 / 中等 / 严重）的**实质问题**时才提交评论；
 `info` 级提示（例如“建议补充测试”）以及零发现的 PR **只写入报告、不评论**，
-也不落去重状态（下次仍可重新评估）。可用 `MIN_SEVERITY_TO_POST` / `--min-severity` 调整：
+也不落去重状态（下次仍可重新评估）。
+
+并且在 GitCode 上默认**只提交行内评论**（挂在具体代码行），完整的“自动代码检视报告”汇总只保留在
+本地 / GitHub Pages 报告里，不单独发汇总评论。需要汇总评论时设 `POST_SUMMARY_COMMENT=1` 或 `--summary-comment`。
+
+可用 `MIN_SEVERITY_TO_POST` / `--min-severity` 调整提交阈值：
 
 - `low`（默认）：只有 low/medium/high 的发现才评论；
 - `medium` / `high`：更克制，只对较严重问题评论；
@@ -156,6 +161,7 @@ python -m pytest -q
 | `--min-severity LEVEL` | 达到该严重度才提交评论：`any/high/medium/low/info`，默认 `low` |
 | `--no-inline-comments` | 只发汇总评论，不发代码行内评论 |
 | `--max-inline-comments N` | 每个 PR 最多 N 条行内评论（默认 3） |
+| `--summary-comment` | 额外提交一条汇总评论（默认不发，汇总只写报告） |
 | `--include-drafts` | 连草稿 PR 一起检视 |
 | `--offline-fixture FILE` | 使用离线夹具运行（自动 dry-run） |
 | `--version` | 打印版本 |
@@ -177,6 +183,7 @@ python -m pytest -q
 | `MIN_SEVERITY_TO_POST` | `low` | 最高严重度达到该级别才提交评论（`info` 级只记录；`any` 表示总是提交） |
 | `INLINE_COMMENTS` | `true` | 是否提交代码行内评论 |
 | `MAX_INLINE_COMMENTS` | `3` | 每个 PR 行内评论上限 |
+| `POST_SUMMARY_COMMENT` | `false` | 是否额外提交汇总评论（默认只发行内，汇总只写报告） |
 | `LLM_API_KEY` | 空 | 配置后启用 AI 检视 |
 | `LLM_BASE_URL` | `https://api.deepseek.com` | OpenAI 风格接口地址 |
 | `LLM_MODEL` | `deepseek-chat` | 模型名 |

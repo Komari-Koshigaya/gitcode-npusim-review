@@ -70,6 +70,8 @@ class Config:
     min_severity_to_post: str = "low"
     inline_comments: bool = True
     max_inline_comments: int = 3
+    # 默认不提交汇总评论：完整报告只写本地 HTML，GitCode 上只发行内意见。
+    summary_comment: bool = False
     llm: LLMConfig = field(default_factory=LLMConfig)
 
     @property
@@ -95,6 +97,7 @@ class Config:
         if opt("no_inline_comments", False):
             inline_comments = False
         max_inline_comments = int(opt("max_inline_comments", 0) or _env_int("MAX_INLINE_COMMENTS", 3))
+        summary_comment = _env_bool("POST_SUMMARY_COMMENT", False) or bool(opt("summary_comment", False))
 
         return cls(
             repo=repo,
@@ -111,6 +114,7 @@ class Config:
             min_severity_to_post=min_severity,
             inline_comments=inline_comments,
             max_inline_comments=max_inline_comments,
+            summary_comment=summary_comment,
             llm=LLMConfig(
                 api_key=_env_str("LLM_API_KEY", ""),
                 base_url=_env_str("LLM_BASE_URL", DEFAULT_LLM_BASE_URL),
