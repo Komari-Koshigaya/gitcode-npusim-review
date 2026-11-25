@@ -2,8 +2,8 @@ name: GitCode PR Review
 
 on:
   schedule:
-    # 每天 01:17 UTC = 北京时间 09:17（避开整点）
-    - cron: "17 1 * * *"
+    # 每天 21:00 UTC = 北京时间次日凌晨 05:00
+    - cron: "0 21 * * *"
   workflow_dispatch:
     inputs:
       dry_run:

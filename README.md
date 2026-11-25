@@ -6,7 +6,7 @@
 
 用 GitHub Actions 每天定时拉取 GitCode `cann/npu-simulator` 的**所有 open PR**，使用「确定性规则 + 可选 LLM」自动进行代码检视，把检视意见提交回 PR，并生成按日期归档的 HTML 日报，通过 **GitHub Pages** 对外展示。
 
-- 🕘 每天北京时间 09:17 自动运行（也可在 Actions 页手动触发）
+- 🕘 每天北京时间 **凌晨 05:00** 自动运行（也可在 Actions 页手动触发）
 - 🤖 规则检视始终运行；配置 LLM 密钥后叠加 AI 检视
 - 🔁 **双层去重**：同一提交永不重复评论，即使状态丢失或手动重跑
 - 💬 **行内评论**：GitCode 上只把 low/medium/high 的问题挂到对应代码行；完整汇总只写入 HTML 报告，不发汇总评论
@@ -18,7 +18,7 @@
 ## 工作流程
 
 ```
-GitHub Actions (每天 09:17)
+GitHub Actions (每天北京时间 05:00)
    │
    ├─ pip install gitcode-cli==0.13.0      # 官方 GitCode CLI（提供 gitcode / gc）
    ├─ gitcode pr list --state open --json  # 拉取所有 open PR
@@ -103,7 +103,7 @@ gh variable set LLM_MODEL    -R <owner>/<repo> --body "deepseek-chat"
 
 ### 3. 运行
 
-- 自动：每天 09:17（北京时间）执行。
+- 自动：每天北京时间 **凌晨 05:00** 执行。
 - 手动：Actions → **GitCode PR Review** → **Run workflow**
   - 勾选 `dry_run` 则只生成报告、不提交评论（报告以 artifact 形式上传，不写入仓库）。
 
