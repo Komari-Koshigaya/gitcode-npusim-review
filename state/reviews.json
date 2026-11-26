@@ -16,9 +16,10 @@
           "rules",
           "llm"
         ],
-        "findings_count": 4,
-        "head_sha": "cae975623be022ec0b972ed4f4ebafa72d39dd93",
-        "reviewed_at": "2026-11-24T23:23:41+08:00",
+        "findings_count": 6,
+        "head_sha": "5b8a2b974a4c89c6b0784665959bbc3580511366",
+        "inline_posted": 3,
+        "reviewed_at": "2026-11-26T11:28:49+08:00",
         "severity": "high"
       },
       "74": {
