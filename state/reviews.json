@@ -51,6 +51,28 @@
         "head_sha": "26f5693118a249290b0b345efcc6543b38567195",
         "reviewed_at": "2026-11-24T23:23:41+08:00",
         "severity": "medium"
+      },
+      "82": {
+        "engines": [
+          "rules",
+          "llm"
+        ],
+        "findings_count": 3,
+        "head_sha": "1be4d9fc41b99b99dd75fb529fc9b1d15d8f4055",
+        "inline_posted": 2,
+        "reviewed_at": "2026-11-27T11:35:06+08:00",
+        "severity": "low"
+      },
+      "83": {
+        "engines": [
+          "rules",
+          "llm"
+        ],
+        "findings_count": 7,
+        "head_sha": "a0e6621f3f22a73a049ca3bc982f4eb2bc7b63e7",
+        "inline_posted": 3,
+        "reviewed_at": "2026-11-27T11:35:06+08:00",
+        "severity": "high"
       }
     }
   },

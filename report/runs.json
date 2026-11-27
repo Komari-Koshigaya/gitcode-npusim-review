@@ -1,5 +1,28 @@
 [
   {
+    "date": "2026-11-27",
+    "generated_at": "2026-11-27T11:35:06+08:00",
+    "generated_at_display": "2026-11-27 11:35:06 +0800",
+    "repo": "cann/npu-simulator",
+    "open_pr_count": 11,
+    "reviewed_count": 8,
+    "posted_count": 2,
+    "skipped_count": 3,
+    "report_only_count": 6,
+    "inline_total": 5,
+    "failed_count": 0,
+    "findings_total": 14,
+    "severity_counts": {
+      "high": 3,
+      "medium": 2,
+      "low": 3,
+      "info": 6
+    },
+    "llm_enabled": true,
+    "dry_run": false,
+    "file": "2026-11-27.html"
+  },
+  {
     "date": "2026-11-26",
     "generated_at": "2026-11-26T11:28:49+08:00",
     "generated_at_display": "2026-11-26 11:28:49 +0800",

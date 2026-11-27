@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>npu-simulator PR 检视日报 · 2026-11-27</title>
+<style>:root{
+  color-scheme: dark;
+  --bg:#0a0f1c; --panel:#111c33; --panel-2:#0d1628; --text:#e6edf7; --muted:#93a4c3;
+  --border:rgba(120,150,200,.18); --border-strong:rgba(120,150,200,.34);
+  --accent:#5b8cff; --green:#34d399; --amber:#fbbf24; --red:#f87171; --gray:#94a3b8;
+  --shadow:0 12px 34px rgba(0,0,0,.35);
+}
+@media (prefers-color-scheme: light){
+  :root{
+    color-scheme: light;
+    --bg:#f4f7fc; --panel:#ffffff; --panel-2:#f7fafd; --text:#0f1b33; --muted:#5b6b86;
+    --border:rgba(30,50,90,.12); --border-strong:rgba(30,50,90,.22);
+    --shadow:0 12px 34px rgba(30,50,90,.08);
+  }
+}
+*{box-sizing:border-box}
+body{
+  margin:0;color:var(--text);line-height:1.65;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  background:
+    radial-gradient(1200px 600px at 8% -10%, rgba(91,140,255,.18), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(34,211,238,.12), transparent 55%),
+    var(--bg);
+}
+.container{max-width:1140px;margin:0 auto;padding:32px 20px 72px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.hero{padding:8px 0 20px}
+.hero .eyebrow{color:var(--muted);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+.hero h1{margin:6px 0 8px;font-size:30px;line-height:1.25;letter-spacing:-.01em}
+.hero .meta{color:var(--muted);font-size:14px}
+.hero .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.hero .links a{font-size:13px;padding:6px 12px;border:1px solid var(--border-strong);border-radius:999px;background:var(--panel)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:22px 0 8px}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px 18px;box-shadow:var(--shadow)}
+.stat .k{color:var(--muted);font-size:12px;letter-spacing:.05em}
+.stat .v{font-size:28px;font-weight:750;margin-top:4px}
+.section{margin-top:28px}
+.section h2{font-size:18px;margin:0 0 12px;display:flex;align-items:center;gap:10px}
+.section h2 .count{color:var(--muted);font-size:13px;font-weight:500}
+.notice{border:1px solid var(--border-strong);background:var(--panel);border-radius:12px;padding:12px 16px;margin:14px 0;font-size:14px}
+.notice.warn{border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.08)}
+.notice.blue{border-color:rgba(91,140,255,.4);background:rgba(91,140,255,.08)}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:16px;background:var(--panel);box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:760px}
+th,td{padding:11px 14px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;letter-spacing:.05em;text-transform:uppercase;background:var(--panel-2)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(91,140,255,.05)}
+td .title{font-weight:600}
+td .sub{color:var(--muted);font-size:12px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:650;border:1px solid transparent;white-space:nowrap}
+.b-green{background:rgba(52,211,153,.14);color:var(--green);border-color:rgba(52,211,153,.32)}
+.b-red{background:rgba(248,113,113,.14);color:var(--red);border-color:rgba(248,113,113,.32)}
+.b-amber{background:rgba(251,191,36,.14);color:var(--amber);border-color:rgba(251,191,36,.32)}
+.b-blue{background:rgba(91,140,255,.16);color:var(--accent);border-color:rgba(91,140,255,.34)}
+.b-gray{background:rgba(148,163,184,.14);color:var(--gray);border-color:rgba(148,163,184,.3)}
+.pr{border:1px solid var(--border);border-radius:16px;background:var(--panel);margin:14px 0;overflow:hidden;box-shadow:var(--shadow)}
+.pr>summary{cursor:pointer;padding:16px 18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;list-style:none}
+.pr>summary::-webkit-details-marker{display:none}
+.pr>summary .num{font-weight:750;color:var(--muted)}
+.pr>summary .ttl{font-weight:650}
+.pr>summary .spacer{flex:1}
+.pr-body{padding:4px 18px 20px;border-top:1px solid var(--border)}
+.pr-body .grid{display:flex;flex-wrap:wrap;gap:16px;color:var(--muted);font-size:13px;margin:12px 0}
+.finding{border-left:3px solid var(--border-strong);padding:10px 14px;margin:12px 0;background:var(--panel-2);border-radius:0 10px 10px 0}
+.finding.high{border-left-color:var(--red)}
+.finding.medium{border-left-color:var(--amber)}
+.finding.low{border-left-color:var(--accent)}
+.finding.info{border-left-color:var(--gray)}
+.f-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+.f-head code{background:rgba(148,163,184,.14);padding:1px 7px;border-radius:6px;font-size:12.5px}
+.f-head .origin{color:var(--muted);font-size:12px}
+.f-msg{margin-top:6px;font-weight:550}
+.f-sug{margin-top:4px;color:var(--muted);font-size:13px}
+.snippet{background:rgba(0,0,0,.16);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin:8px 0 0;overflow:auto;font-size:12.5px;white-space:pre-wrap;word-break:break-all}
+details.block{margin:12px 0}
+details.block>summary{cursor:pointer;color:var(--accent);font-size:13px;padding:4px 0}
+pre.comment{background:var(--panel-2);border:1px solid var(--border);border-radius:12px;padding:14px;overflow:auto;max-height:440px;font-size:12.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.err{border:1px solid rgba(248,113,113,.4);background:rgba(248,113,113,.08);border-radius:12px;padding:12px 16px;font-size:13.5px;color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
+.muted{color:var(--muted)}
+.empty{color:var(--muted);padding:22px;text-align:center;border:1px dashed var(--border-strong);border-radius:16px}
+.run-card{display:flex;gap:16px;align-items:center;flex-wrap:wrap;border:1px solid var(--border);border-radius:16px;background:var(--panel);padding:16px 18px;margin:12px 0;box-shadow:var(--shadow)}
+.run-card .date{font-size:18px;font-weight:750;min-width:130px}
+.run-card .nums{color:var(--muted);font-size:13px}
+.run-card .spacer{flex:1}
+footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between}
+@media (max-width:640px){
+  .hero h1{font-size:23px}
+  .stat .v{font-size:23px}
+}</style>
+</head>
+<body>
+<div class="container">
+<header class="hero"><div class="eyebrow">Automated Pull Request Review</div><h1>npu-simulator PR 检视日报 · 2026-11-27</h1><div class="meta">生成时间：2026-11-27 11:35:06 +0800 · 目标仓库：<a href="https://gitcode.com/cann/npu-simulator/pulls" target="_blank" rel="noopener">cann/npu-simulator</a></div><div class="links"><a href="https://gitcode.com/cann/npu-simulator/pulls" target="_blank" rel="noopener">GitCode PR 列表 ↗</a><a href="https://github.com/Komari-Koshigaya/gitcode-npusim-review" target="_blank" rel="noopener">GitHub 仓库 ↗</a><a href="./index.html">历史报告</a></div></header><div class="stats"><div class="stat"><div class="k">开启中的 PR</div><div class="v">11</div></div><div class="stat"><div class="k">本次检视</div><div class="v">8</div></div><div class="stat"><div class="k">已提交意见</div><div class="v">2</div></div><div class="stat"><div class="k">跳过（无新提交）</div><div class="v">3</div></div><div class="stat"><div class="k">仅报告·未提交</div><div class="v">6</div></div><div class="stat"><div class="k">行内意见</div><div class="v">5</div></div><div class="stat"><div class="k">失败</div><div class="v">0</div></div><div class="stat"><div class="k">发现总数</div><div class="v">14</div></div></div><section class="section"><h2>开启中的 PR 一览 <span class="count">共 11 个</span></h2><div class="table-wrap"><table><thead><tr><th>PR</th><th>标题 / 分支</th><th>作者</th><th>状态</th><th>风险</th><th>发现</th></tr></thead><tbody><tr><td><a href="https://gitcode.com/cann/npu-simulator/merge_requests/83" target="_blank" rel="noopener">#83</a></td><td><span class="title">fix(report): export complete source lines by file and line number</span><div class="sub">bugfix/source_lines_visualization -&gt; master</div></td><td>churkinaleksandr</td><td><span class="badge b-green">本次已检视</span></td><td><span class="badge b-red">高</span></td><td>7</td></tr><tr><td><a href="https://gitcode.com/cann/npu-simulator/merge_requests/82" target="_blank" rel="noopener">#82</a></td><td><span class="title">fix(report): resolve default output beside a database file</span><div class="sub">fix/single-db-report-output -&gt; master</div></td><td>lilong555</td><td><span class="badge b-green">本次已检视</span></td><td><span class="badge b-blue">低</span></td><td>3</td></tr><tr><td><a href="https://gitcode.com/cann/npu-simulator/merge_requests/81" target="_blank" rel="noopener">#81</a></td><td><span class="title">docs: clarify helper library source and setup</span><div class="sub">docs/clarify-helper-library-69 -&gt; master</div></td><td>lilong555</td><td><span class="badge b-gray">无实质发现·未提交</span></td><td></td><td>1</td></tr><tr><td><a href="https://gitcode.com/cann/npu-simulator/merge_requests/77" target="_blank" rel="noopener">#77</a></td><td><span class="title">docs: clarify cannsim package and CLI aliases</span><div class="sub">docs/explain-cannsim-name-68 -&gt; master</div></td><td>lilong555</td><td><span class="badge b-gray">无实质发现·未提交</span></td><td></td><td>0</td></tr><tr><td><a href="https://gitcode.com/cann/npu-simulator/merge_requests/75" target="_blank" rel="noopener">#75</a></td><td><span class="title">refactor: remove unused _bar helper and duplicate _parse definition</span><div class="sub">fix/remove-dead-helpers -&gt; master</div></td><td>qunzhongjia</td><td><span class="badge b-gray">无实质发现·未提交</span></td><td></td><td>0</td></tr><tr><td><a href="https://gitcode.com/cann/npu-simulator/merge_requests/74" target="_blank" rel="noopener">#74</a></td><td><span class="title">fix(prof): fix AIV1 overlap label, SIMT f-string log, and analyzer guards</span><div class="sub">fix/prof-summary-and-analyzer-guards -&gt; master</div></td><td>qunzhongjia</td><td><span class="badge b-gray">无新提交·跳过</span></td><td></td><td>0</td></tr><tr><td><a href="https://gitcode.com/cann/npu-simulator/merge_requests/73" target="_blank" rel="noopener">#73</a></td><td><span class="title">fix(ci): update REPOSITORY_NAME to npu-simulator and remove stale bandit path</span><div class="sub">fix/ci-repo-name-and-bandit-path -&gt; master</div></td><td>qunzhongjia</td><td><span class="badge b-gray">无实质发现·未提交</span></td><td></td><td>1</td></tr><tr><td><a href="https://gitcode.com/cann/npu-simulator/merge_requests/72" target="_blank" rel="noopener">#72</a></td><td><span class="title">CI 添加StaticCheck_md_check检查项</span><div class="sub">add-staticcheck-md-check -&gt; master</div></td><td>zhouchongshun</td><td><span class="badge b-gray">无新提交·跳过</span></td><td></td><td>0</td></tr><tr><td><a href="https://gitcode.com/cann/npu-simulator/merge_requests/70" target="_blank" rel="noopener">#70</a></td><td><span class="title">docs(npu-simulator): fix spacing in examples</span><div class="sub">codex/issue-66-doc-spaces -&gt; master</div></td><td>gcw_WJCkAUuk</td><td><span class="badge b-gray">无实质发现·未提交</span></td><td></td><td>0</td></tr><tr><td><a href="https://gitcode.com/cann/npu-simulator/merge_requests/60" target="_blank" rel="noopener">#60</a></td><td><span class="title">fix(report): collapse the fixpipe twin rows by identity, not by adjacency</span><div class="sub">fix/memory-heatmap-twin-pairing -&gt; master</div></td><td>gcw_EkTYFH3T</td><td><span class="badge b-gray">无实质发现·未提交</span></td><td></td><td>2</td></tr><tr><td><a href="https://gitcode.com/cann/npu-simulator/merge_requests/59" target="_blank" rel="noopener">#59</a></td><td><span class="title">fix(record): recognize versioned Python executables</span><div class="sub">fix-versioned-python-launch -&gt; master</div></td><td>liangjinxuan-2026</td><td><span class="badge b-gray">无新提交·跳过</span></td><td></td><td>0</td></tr></tbody></table></div></section><section class="section"><h2>已检视 PR 明细</h2><details class="pr"><summary><span class="num">#83</span><span class="ttl">fix(report): export complete source lines by file and line number</span><span class="spacer"></span><span class="badge b-green">本次已检视</span><span class="badge b-red">高</span></summary><div class="pr-body"><div class="grid"><span>提交：<code>a0e6621f3f</code></span><span>变更：+85 / −81</span><span>引擎：规则 + AI</span><span>发现：7 条</span><span>行内意见：3 / 候选 3</span></div><h3 style="font-size:15px;margin:18px 0 6px">严重（3）</h3><div class="finding high"><div class="f-head"><span class="badge b-red">严重</span><code>npusim/prof/src/backend/database_manager.py:98</code><span class="origin">AI · llm-review</span></div><div class="f-msg">_save_source_lines 写入时使用 line.file_id + 1，而 elf_object_reader 中 SourceLine.file_id 直接来自 SourceFiles 的 file_id，save_full_source_lines 也直接用 row[&quot;SourceFileId&quot;]。+1 偏移会使 SourceLines.SourceFileId 与 SourceFiles.SourceFileId 不一致，导致按文件重建源码、DebugInfo 关联以及 save_full_source_lines 的 UPDATE 全部错位。</div><div class="f-sug">建议：去掉 +1，直接使用 line.file_id，确保与 SourceFiles.SourceFileId 及 DebugInfo.SourceFileId 使用同一 ID 空间。</div></div><div class="finding high"><div class="f-head"><span class="badge b-red">严重</span><code>npusim/prof/src/backend/database_manager.py:64</code><span class="origin">AI · llm-review</span></div><div class="f-msg">UPDATE DebugInfo 仅处理 SourceLineId IS NULL 的行。旧库中 DebugInfo.SourceLineId 已有值（旧语义为去重文本片段 ID），重新生成报告时这些行不会被更新为新 SourceLines 的位置 ID，导致指令到源码的导航指向错误行。</div><div class="f-sug">建议：对所有需要重新映射的 DebugInfo 行执行更新（例如去掉 WHERE SourceLineId IS NULL，或在重建 SourceLines 前将 SourceLineId 置空），并确保仅在能匹配到 (SourceFileId, DebugInfoLineNum) 时更新，避免写入 NULL。</div></div><div class="finding high"><div class="f-head"><span class="badge b-red">严重</span><code>npusim/prof/src/sql/bridge.sql:58</code><span class="origin">AI · llm-review</span></div><div class="f-msg">SourceLines 表结构新增了 SourceFileId、SourceLineNum 列并移除了 SourceLine 的 UNIQUE 约束，但 CREATE TABLE IF NOT EXISTS 不会修改已存在的旧表。对已分析过的旧数据库重新生成报告时，_save_source_lines 和 save_full_source_lines 的 INSERT 会因缺少列而失败，PR 描述中“Rebuild legacy derived SourceLines schemas”在 diff 中未见实现。</div><div class="f-sug">建议：在报告生成/导出前检测 SourceLines 的 PRAGMA table_info，若缺少新列则重建该表（或执行 ALTER TABLE 迁移），并同步处理 SourceFiles.SourceFileText 旧列的导出兼容逻辑。</div></div><h3 style="font-size:15px;margin:18px 0 6px">中等（2）</h3><div class="finding medium"><div class="f-head"><span class="badge b-amber">中等</span><code>npusim/prof/src/backend/database_manager.py:53</code><span class="origin">AI · llm-review</span></div><div class="f-msg">读取源码时使用 line.rstrip(&quot;\n&quot;)，在 Windows 风格 CRLF 文件上会保留行尾的 \r，导致 SourceLine 文本带有多余回车，与文档声称“Line terminators are omitted”不符，也会影响按文本比较/展示。</div><div class="f-sug">建议：使用 line.rstrip(&quot;\r\n&quot;) 或 newline=None 的通用换行读取后再去除行终止符；elf_object_reader.py 中同样的 rstrip(&quot;\n&quot;) 也应一并处理。</div></div><div class="finding medium"><div class="f-head"><span class="badge b-amber">中等</span><code>npusim/prof/src/backend/database_manager.py:59</code><span class="origin">AI · llm-review</span></div><div class="f-msg">INSERT OR IGNORE 依赖 (SourceFileId, SourceLineNum) 唯一约束，但旧库中该约束不存在（见 schema 问题），且若同一文件被多次处理，IGNORE 会静默保留旧文本，无法保证 SourceLines 与当前文件内容一致。</div><div class="f-sug">建议：在确保表结构已迁移的前提下，对每个文件先删除其已有 SourceLines 行再插入，或使用 INSERT ... ON CONFLICT DO UPDATE 保证内容刷新。</div></div><h3 style="font-size:15px;margin:18px 0 6px">较低（1）</h3><div class="finding low"><div class="f-head"><span class="badge b-blue">较低</span><code>npusim/prof/src/backend/elf_object_reader.py:237</code><span class="origin">AI · llm-review</span></div><div class="f-msg">SourceLine 现在包含 file_id 和 line_num，source_lines_map 以整个 SourceLine 为键，因此同一文本在不同位置会生成不同条目，符合新语义；但 line_id 使用 len(source_lines_map) 生成，与数据库 AUTOINCREMENT 分配的 SourceLineId 并不保证一致，后续依赖该 line_id 的 DebugInfo 写入需确认已通过 save_full_source_lines 的 UPDATE 重新映射。</div><div class="f-sug">建议：确认 _save_source_lines 插入后 DebugInfo 的 SourceLineId 均被重新映射（见 UPDATE 问题），或在插入时显式回填真实 SourceLineId，避免两套 ID 语义混用。</div></div><h3 style="font-size:15px;margin:18px 0 6px">提示（1）</h3><div class="finding info"><div class="f-head"><span class="badge b-gray">提示</span><code>（全局）</code><span class="origin">规则 · missing-tests</span></div><div class="f-msg">本 PR 修改了代码，但未包含测试变更。</div><div class="f-sug">建议：建议补充或更新覆盖改动的测试用例。</div></div><details class="block"><summary>查看完整检视汇总（Markdown，供本地查看）</summary><pre class="comment">## 🤖 自动代码检视报告
+
+&lt;!-- npu-review sha=a0e6621f3f22a73a049ca3bc982f4eb2bc7b63e7 --&gt;
+&gt; PR #83 · 提交 `a0e6621f` · 引擎：规则 + AI · 总体风险：**高**
+
+**变更规模**：+85 / −81，5 个文件
+
+**发现统计**：严重 3 · 中等 2 · 较低 1 · 提示 1（共 7 条）
+
+**行内意见**：已在 3 处代码行留下行内评论。
+
+规则检视共发现 1 个问题（严重 0、中等 0、较低 0、提示 1）。
+
+**AI 总结**：本次改动把完整源码从 SourceFiles.SourceFileText 迁移到按 (SourceFileId, SourceLineNum) 组织的 SourceLines，并同步更新文档、schema 与写入逻辑，方向合理。但存在几处会导致数据错误或旧库不兼容的实质问题：_save_source_lines 对 file_id 做了 +1 偏移，与 ELF 读取和 save_full_source_lines 使用的 file_id 不一致；save_full_source_lines 的 UPDATE 只处理 SourceLineId IS NULL 的行，无法修正旧库中已存在但语义已变的 SourceLineId；schema 变更未提供旧库迁移，旧库的 SourceLines 缺少新列会导致 INSERT 失败。建议修复后再合入。
+
+### 严重（3）
+- `npusim/prof/src/backend/database_manager.py:98` — _save_source_lines 写入时使用 line.file_id + 1，而 elf_object_reader 中 SourceLine.file_id 直接来自 SourceFiles 的 file_id，save_full_source_lines 也直接用 row[&quot;SourceFileId&quot;]。+1 偏移会使 SourceLines.SourceFileId 与 SourceFiles.SourceFileId 不一致，导致按文件重建源码、DebugInfo 关联以及 save_full_source_lines 的 UPDATE 全部错位。  _[AI · llm-review]_
+  - 建议：去掉 +1，直接使用 line.file_id，确保与 SourceFiles.SourceFileId 及 DebugInfo.SourceFileId 使用同一 ID 空间。
+- `npusim/prof/src/backend/database_manager.py:64` — UPDATE DebugInfo 仅处理 SourceLineId IS NULL 的行。旧库中 DebugInfo.SourceLineId 已有值（旧语义为去重文本片段 ID），重新生成报告时这些行不会被更新为新 SourceLines 的位置 ID，导致指令到源码的导航指向错误行。  _[AI · llm-review]_
+  - 建议：对所有需要重新映射的 DebugInfo 行执行更新（例如去掉 WHERE SourceLineId IS NULL，或在重建 SourceLines 前将 SourceLineId 置空），并确保仅在能匹配到 (SourceFileId, DebugInfoLineNum) 时更新，避免写入 NULL。
+- `npusim/prof/src/sql/bridge.sql:58` — SourceLines 表结构新增了 SourceFileId、SourceLineNum 列并移除了 SourceLine 的 UNIQUE 约束，但 CREATE TABLE IF NOT EXISTS 不会修改已存在的旧表。对已分析过的旧数据库重新生成报告时，_save_source_lines 和 save_full_source_lines 的 INSERT 会因缺少列而失败，PR 描述中“Rebuild legacy derived SourceLines schemas”在 diff 中未见实现。  _[AI · llm-review]_
+  - 建议：在报告生成/导出前检测 SourceLines 的 PRAGMA table_info，若缺少新列则重建该表（或执行 ALTER TABLE 迁移），并同步处理 SourceFiles.SourceFileText 旧列的导出兼容逻辑。
+
+### 中等（2）
+- `npusim/prof/src/backend/database_manager.py:53` — 读取源码时使用 line.rstrip(&quot;\n&quot;)，在 Windows 风格 CRLF 文件上会保留行尾的 \r，导致 SourceLine 文本带有多余回车，与文档声称“Line terminators are omitted”不符，也会影响按文本比较/展示。  _[AI · llm-review]_
+  - 建议：使用 line.rstrip(&quot;\r\n&quot;) 或 newline=None 的通用换行读取后再去除行终止符；elf_object_reader.py 中同样的 rstrip(&quot;\n&quot;) 也应一并处理。
+- `npusim/prof/src/backend/database_manager.py:59` — INSERT OR IGNORE 依赖 (SourceFileId, SourceLineNum) 唯一约束，但旧库中该约束不存在（见 schema 问题），且若同一文件被多次处理，IGNORE 会静默保留旧文本，无法保证 SourceLines 与当前文件内容一致。  _[AI · llm-review]_
+  - 建议：在确保表结构已迁移的前提下，对每个文件先删除其已有 SourceLines 行再插入，或使用 INSERT ... ON CONFLICT DO UPDATE 保证内容刷新。
+
+### 较低（1）
+- `npusim/prof/src/backend/elf_object_reader.py:237` — SourceLine 现在包含 file_id 和 line_num，source_lines_map 以整个 SourceLine 为键，因此同一文本在不同位置会生成不同条目，符合新语义；但 line_id 使用 len(source_lines_map) 生成，与数据库 AUTOINCREMENT 分配的 SourceLineId 并不保证一致，后续依赖该 line_id 的 DebugInfo 写入需确认已通过 save_full_source_lines 的 UPDATE 重新映射。  _[AI · llm-review]_
+  - 建议：确认 _save_source_lines 插入后 DebugInfo 的 SourceLineId 均被重新映射（见 UPDATE 问题），或在插入时显式回填真实 SourceLineId，避免两套 ID 语义混用。
+
+### 提示（1）
+- （全局） — 本 PR 修改了代码，但未包含测试变更。  _[规则 · missing-tests]_
+  - 建议：建议补充或更新覆盖改动的测试用例。
+
+---
+&lt;sub&gt;本评论由自动检视机器人生成，仅供参考，不构成人工审批结论；同一提交（head SHA）不会重复评论。&lt;/sub&gt;
+</pre></details></div><div class="pr-body" style="border-top:none;padding-top:0"><a href="https://gitcode.com/cann/npu-simulator/merge_requests/83" target="_blank" rel="noopener">在 GitCode 打开 PR ↗</a></div></details><details class="pr"><summary><span class="num">#82</span><span class="ttl">fix(report): resolve default output beside a database file</span><span class="spacer"></span><span class="badge b-green">本次已检视</span><span class="badge b-blue">低</span></summary><div class="pr-body"><div class="grid"><span>提交：<code>1be4d9fc41</code></span><span>变更：+54 / −45</span><span>引擎：规则 + AI</span><span>发现：3 条</span><span>行内意见：2 / 候选 2</span></div><h3 style="font-size:15px;margin:18px 0 6px">较低（2）</h3><div class="finding low"><div class="f-head"><span class="badge b-blue">较低</span><code>npusim/core/report/report.py:535</code><span class="origin">AI · llm-review</span></div><div class="f-msg">使用 export_path.is_file() 判断输入类型，若传入的 DB 路径不存在（如拼写错误或尚未生成），is_file() 返回 False，会被当作目录处理，默认输出变成 &lt;不存在的DB路径&gt;/report，随后在路径校验阶段才报错，错误信息可能指向输出目录而非输入不存在，误导用户。</div><div class="f-sug">建议：可先判断路径是否存在，不存在时给出明确的输入路径错误；或结合后缀（如 .db）与 is_file() 共同判断，并在 _resolve_paths 中优先校验输入存在性。</div></div><div class="finding low"><div class="f-head"><span class="badge b-blue">较低</span><code>npusim/main.py:34</code><span class="origin">AI · llm-review</span></div><div class="f-msg">从 npusim.core.report.report 直接导入 add_report_arguments，而该模块同时是报告实现模块，导入会连带加载报告链相关依赖；同时 npusim/core/report/__init__.py 已导出 report，新增的公共函数未从包 __init__ 导出，导致 main.py 需要深入子模块导入，破坏封装。</div><div class="f-sug">建议：在 npusim/core/report/__init__.py 中导出 add_report_arguments，main.py 改为 from npusim.core.report import report, add_report_arguments，保持入口层只依赖包级 API。</div></div><h3 style="font-size:15px;margin:18px 0 6px">提示（1）</h3><div class="finding info"><div class="f-head"><span class="badge b-gray">提示</span><code>tests/test_core/test_report/test_report.py:80</code><span class="origin">AI · llm-review</span></div><div class="f-msg">expected_output 使用 output or (...) 的写法，当显式 output 为 Path 时依赖其真值；Path 恒为真值，当前用例无问题，但若后续扩展为传入空字符串等场景会静默回退到默认路径，测试语义不够显式。</div><div class="f-sug">建议：改为 expected_output = output if output is not None else (db.parent if single_db else export_dir) / &quot;report&quot;，与下方调用处的 None 判断保持一致。</div></div><details class="block"><summary>查看完整检视汇总（Markdown，供本地查看）</summary><pre class="comment">## 🤖 自动代码检视报告
+
+&lt;!-- npu-review sha=1be4d9fc41b99b99dd75fb529fc9b1d15d8f4055 --&gt;
+&gt; PR #82 · 提交 `1be4d9fc` · 引擎：规则 + AI · 总体风险：**低**
+
+**变更规模**：+54 / −45，4 个文件
+
+**发现统计**：严重 0 · 中等 0 · 较低 2 · 提示 1（共 3 条）
+
+**行内意见**：已在 2 处代码行留下行内评论。
+
+规则检视共发现 0 个问题（严重 0、中等 0、较低 0、提示 0）。
+
+**AI 总结**：本次修复思路正确：单 DB 输入时默认输出改为 DB 所在目录下的 report，避免把 DB 文件当目录使用；两个 CLI 入口复用 add_report_arguments 也消除了重复定义。测试覆盖了目录/单 DB 与默认/显式输出四种组合。未发现会导致错误或数据损坏的问题，仅有少量可维护性与健壮性建议。
+
+### 较低（2）
+- `npusim/core/report/report.py:535` — 使用 export_path.is_file() 判断输入类型，若传入的 DB 路径不存在（如拼写错误或尚未生成），is_file() 返回 False，会被当作目录处理，默认输出变成 &lt;不存在的DB路径&gt;/report，随后在路径校验阶段才报错，错误信息可能指向输出目录而非输入不存在，误导用户。  _[AI · llm-review]_
+  - 建议：可先判断路径是否存在，不存在时给出明确的输入路径错误；或结合后缀（如 .db）与 is_file() 共同判断，并在 _resolve_paths 中优先校验输入存在性。
+- `npusim/main.py:34` — 从 npusim.core.report.report 直接导入 add_report_arguments，而该模块同时是报告实现模块，导入会连带加载报告链相关依赖；同时 npusim/core/report/__init__.py 已导出 report，新增的公共函数未从包 __init__ 导出，导致 main.py 需要深入子模块导入，破坏封装。  _[AI · llm-review]_
+  - 建议：在 npusim/core/report/__init__.py 中导出 add_report_arguments，main.py 改为 from npusim.core.report import report, add_report_arguments，保持入口层只依赖包级 API。
+
+### 提示（1）
+- `tests/test_core/test_report/test_report.py:80` — expected_output 使用 output or (...) 的写法，当显式 output 为 Path 时依赖其真值；Path 恒为真值，当前用例无问题，但若后续扩展为传入空字符串等场景会静默回退到默认路径，测试语义不够显式。  _[AI · llm-review]_
+  - 建议：改为 expected_output = output if output is not None else (db.parent if single_db else export_dir) / &quot;report&quot;，与下方调用处的 None 判断保持一致。
+
+---
+&lt;sub&gt;本评论由自动检视机器人生成，仅供参考，不构成人工审批结论；同一提交（head SHA）不会重复评论。&lt;/sub&gt;
+</pre></details></div><div class="pr-body" style="border-top:none;padding-top:0"><a href="https://gitcode.com/cann/npu-simulator/merge_requests/82" target="_blank" rel="noopener">在 GitCode 打开 PR ↗</a></div></details><details class="pr"><summary><span class="num">#81</span><span class="ttl">docs: clarify helper library source and setup</span><span class="spacer"></span><span class="badge b-gray">无实质发现·未提交</span><span class="badge b-blue">低</span></summary><div class="pr-body"><div class="grid"><span>提交：<code>a898d15c08</code></span><span>变更：+10 / −7</span><span>引擎：规则 + AI</span><span>发现：1 条</span></div><h3 style="font-size:15px;margin:18px 0 6px">提示（1）</h3><div class="finding info"><div class="f-head"><span class="badge b-gray">提示</span><code>（全局）</code><span class="origin">规则 · missing-tests</span></div><div class="f-msg">本 PR 修改了代码，但未包含测试变更。</div><div class="f-sug">建议：建议补充或更新覆盖改动的测试用例。</div></div><details class="block"><summary>查看完整检视汇总（Markdown，供本地查看）</summary><pre class="comment">## 🤖 自动代码检视报告
+
+&lt;!-- npu-review sha=a898d15c08274e89ab37c452489a1c182b11108c --&gt;
+&gt; PR #81 · 提交 `a898d15c` · 引擎：规则 + AI · 总体风险：**低**
+
+**变更规模**：+10 / −7，2 个文件
+
+**发现统计**：严重 0 · 中等 0 · 较低 0 · 提示 1（共 1 条）
+
+规则检视共发现 1 个问题（严重 0、中等 0、较低 0、提示 1）。
+
+**AI 总结**：本次改动仅调整文档与注释，未改变运行逻辑。新增的安装说明和链接与源码查找逻辑一致，未发现实质性问题。
+
+### 提示（1）
+- （全局） — 本 PR 修改了代码，但未包含测试变更。  _[规则 · missing-tests]_
+  - 建议：建议补充或更新覆盖改动的测试用例。
+
+---
+&lt;sub&gt;本评论由自动检视机器人生成，仅供参考，不构成人工审批结论；同一提交（head SHA）不会重复评论。&lt;/sub&gt;
+</pre></details></div><div class="pr-body" style="border-top:none;padding-top:0"><a href="https://gitcode.com/cann/npu-simulator/merge_requests/81" target="_blank" rel="noopener">在 GitCode 打开 PR ↗</a></div></details><details class="pr"><summary><span class="num">#77</span><span class="ttl">docs: clarify cannsim package and CLI aliases</span><span class="spacer"></span><span class="badge b-gray">无实质发现·未提交</span><span class="badge b-blue">低</span></summary><div class="pr-body"><div class="grid"><span>提交：<code>34433a4bbf</code></span><span>变更：+2 / −0</span><span>引擎：规则 + AI</span><span>发现：0 条</span></div><details class="block"><summary>查看完整检视汇总（Markdown，供本地查看）</summary><pre class="comment">## 🤖 自动代码检视报告
+
+&lt;!-- npu-review sha=34433a4bbfa0a05ede71b073d1c23d1c6c66cc4b --&gt;
+&gt; PR #77 · 提交 `34433a4b` · 引擎：规则 + AI · 总体风险：**低**
+
+**变更规模**：+2 / −0，1 个文件
+
+**发现统计**：严重 0 · 中等 0 · 较低 0 · 提示 0（共 0 条）
+
+规则检视共发现 0 个问题（严重 0、中等 0、较低 0、提示 0）。
+
+**AI 总结**：本次仅新增两行 README 说明，用于澄清 cannsim 与 npusim 的命名关系，改动范围小且与 PR 目标一致，未发现实质性问题。
+
+---
+&lt;sub&gt;本评论由自动检视机器人生成，仅供参考，不构成人工审批结论；同一提交（head SHA）不会重复评论。&lt;/sub&gt;
+</pre></details></div><div class="pr-body" style="border-top:none;padding-top:0"><a href="https://gitcode.com/cann/npu-simulator/merge_requests/77" target="_blank" rel="noopener">在 GitCode 打开 PR ↗</a></div></details><details class="pr"><summary><span class="num">#75</span><span class="ttl">refactor: remove unused _bar helper and duplicate _parse definition</span><span class="spacer"></span><span class="badge b-gray">无实质发现·未提交</span><span class="badge b-blue">低</span></summary><div class="pr-body"><div class="grid"><span>提交：<code>76a2e673e5</code></span><span>变更：+0 / −14</span><span>引擎：规则 + AI</span><span>发现：0 条</span></div><details class="block"><summary>查看完整检视汇总（Markdown，供本地查看）</summary><pre class="comment">## 🤖 自动代码检视报告
+
+&lt;!-- npu-review sha=76a2e673e5e85979d9883eb79d86fb721ec81fb9 --&gt;
+&gt; PR #75 · 提交 `76a2e673` · 引擎：规则 + AI · 总体风险：**低**
+
+**变更规模**：+0 / −14，2 个文件
+
+**发现统计**：严重 0 · 中等 0 · 较低 0 · 提示 0（共 0 条）
+
+规则检视共发现 0 个问题（严重 0、中等 0、较低 0、提示 0）。
+
+**AI 总结**：本次改动仅删除未使用的嵌套辅助函数 _bar 和测试文件中重复定义的 _parse，属于安全的死代码清理，未发现实质问题。
+
+---
+&lt;sub&gt;本评论由自动检视机器人生成，仅供参考，不构成人工审批结论；同一提交（head SHA）不会重复评论。&lt;/sub&gt;
+</pre></details></div><div class="pr-body" style="border-top:none;padding-top:0"><a href="https://gitcode.com/cann/npu-simulator/merge_requests/75" target="_blank" rel="noopener">在 GitCode 打开 PR ↗</a></div></details><details class="pr"><summary><span class="num">#73</span><span class="ttl">fix(ci): update REPOSITORY_NAME to npu-simulator and remove stale bandit path</span><span class="spacer"></span><span class="badge b-gray">无实质发现·未提交</span><span class="badge b-blue">低</span></summary><div class="pr-body"><div class="grid"><span>提交：<code>edac0ff3a4</code></span><span>变更：+3 / −3</span><span>引擎：规则 + AI</span><span>发现：1 条</span></div><h3 style="font-size:15px;margin:18px 0 6px">提示（1）</h3><div class="finding info"><div class="f-head"><span class="badge b-gray">提示</span><code>（全局）</code><span class="origin">规则 · missing-tests</span></div><div class="f-msg">本 PR 修改了代码，但未包含测试变更。</div><div class="f-sug">建议：建议补充或更新覆盖改动的测试用例。</div></div><details class="block"><summary>查看完整检视汇总（Markdown，供本地查看）</summary><pre class="comment">## 🤖 自动代码检视报告
+
+&lt;!-- npu-review sha=edac0ff3a4db657db96cb4ccada1e75b3cdb8f0d --&gt;
+&gt; PR #73 · 提交 `edac0ff3` · 引擎：规则 + AI · 总体风险：**低**
+
+**变更规模**：+3 / −3，3 个文件
+
+**发现统计**：严重 0 · 中等 0 · 较低 0 · 提示 1（共 1 条）
+
+规则检视共发现 1 个问题（严重 0、中等 0、较低 0、提示 1）。
+
+**AI 总结**：本次改动将 CI 脚本中复制残留的仓库名修正为 npu-simulator，并移除了 bandit 参数中不存在的根目录路径，改动范围小且与描述一致，未发现实质性问题。
+
+### 提示（1）
+- （全局） — 本 PR 修改了代码，但未包含测试变更。  _[规则 · missing-tests]_
+  - 建议：建议补充或更新覆盖改动的测试用例。
+
+---
+&lt;sub&gt;本评论由自动检视机器人生成，仅供参考，不构成人工审批结论；同一提交（head SHA）不会重复评论。&lt;/sub&gt;
+</pre></details></div><div class="pr-body" style="border-top:none;padding-top:0"><a href="https://gitcode.com/cann/npu-simulator/merge_requests/73" target="_blank" rel="noopener">在 GitCode 打开 PR ↗</a></div></details><details class="pr"><summary><span class="num">#70</span><span class="ttl">docs(npu-simulator): fix spacing in examples</span><span class="spacer"></span><span class="badge b-gray">无实质发现·未提交</span><span class="badge b-blue">低</span></summary><div class="pr-body"><div class="grid"><span>提交：<code>2a56993663</code></span><span>变更：+5 / −5</span><span>引擎：规则 + AI</span><span>发现：0 条</span></div><details class="block"><summary>查看完整检视汇总（Markdown，供本地查看）</summary><pre class="comment">## 🤖 自动代码检视报告
+
+&lt;!-- npu-review sha=2a56993663da0c620495fa3caeb827fe1948f98f --&gt;
+&gt; PR #70 · 提交 `2a569936` · 引擎：规则 + AI · 总体风险：**低**
+
+**变更规模**：+5 / −5，2 个文件
+
+**发现统计**：严重 0 · 中等 0 · 较低 0 · 提示 0（共 0 条）
+
+规则检视共发现 0 个问题（严重 0、中等 0、较低 0、提示 0）。
+
+**AI 总结**：本次 PR 仅修正两篇中文文档中 5 处中英文间距，改动与 Issue #66 正文列出的条目一致，未触及命令、参数或技术语义，属于低风险纯文档修改，未发现实质问题。
+
+---
+&lt;sub&gt;本评论由自动检视机器人生成，仅供参考，不构成人工审批结论；同一提交（head SHA）不会重复评论。&lt;/sub&gt;
+</pre></details></div><div class="pr-body" style="border-top:none;padding-top:0"><a href="https://gitcode.com/cann/npu-simulator/merge_requests/70" target="_blank" rel="noopener">在 GitCode 打开 PR ↗</a></div></details><details class="pr"><summary><span class="num">#60</span><span class="ttl">fix(report): collapse the fixpipe twin rows by identity, not by adjacency</span><span class="spacer"></span><span class="badge b-gray">无实质发现·未提交</span><span class="badge b-blue">低</span></summary><div class="pr-body"><div class="grid"><span>提交：<code>a2b8e1189e</code></span><span>变更：+11 / −5</span><span>引擎：规则 + AI</span><span>发现：2 条</span></div><h3 style="font-size:15px;margin:18px 0 6px">提示（2）</h3><div class="finding info"><div class="f-head"><span class="badge b-gray">提示</span><code>（全局）</code><span class="origin">规则 · missing-tests</span></div><div class="f-msg">本 PR 修改了代码，但未包含测试变更。</div><div class="f-sug">建议：建议补充或更新覆盖改动的测试用例。</div></div><div class="finding info"><div class="f-head"><span class="badge b-gray">提示</span><code>npusim/prof/src/backend/analyzers/david/memory_heatmap_analyzer.py:279</code><span class="origin">AI · llm-review</span></div><div class="f-msg">pending 字典中未配对的访问会一直保留到迭代结束；若某 twin_key 只有一行（例如 trace 截断或数据缺失），该条目不会被清理，属于可接受的边界行为，但值得确认。</div><div class="f-sug">建议：可考虑在文档字符串中补充说明：未等到孪生行的访问会保留在字典中直至迭代结束，不影响正确性。</div></div><details class="block"><summary>查看完整检视汇总（Markdown，供本地查看）</summary><pre class="comment">## 🤖 自动代码检视报告
+
+&lt;!-- npu-review sha=a2b8e1189e54d9543312ea78aecf8bd2e3bc455f --&gt;
+&gt; PR #60 · 提交 `a2b8e118` · 引擎：规则 + AI · 总体风险：**低**
+
+**变更规模**：+11 / −5，1 个文件
+
+**发现统计**：严重 0 · 中等 0 · 较低 0 · 提示 2（共 2 条）
+
+规则检视共发现 1 个问题（严重 0、中等 0、较低 0、提示 1）。
+
+**AI 总结**：该修复正确识别了原实现的缺陷：孪生行因 CoreId 不同在 ORDER BY 下不相邻，单槽 pending 会被中间访问覆盖导致重复计数。改为按 twin_key 索引的字典后配对不再依赖相邻性，配对成功即删除，逻辑正确且内存占用可控。未发现实质性问题，建议合入。
+
+### 提示（2）
+- （全局） — 本 PR 修改了代码，但未包含测试变更。  _[规则 · missing-tests]_
+  - 建议：建议补充或更新覆盖改动的测试用例。
+- `npusim/prof/src/backend/analyzers/david/memory_heatmap_analyzer.py:279` — pending 字典中未配对的访问会一直保留到迭代结束；若某 twin_key 只有一行（例如 trace 截断或数据缺失），该条目不会被清理，属于可接受的边界行为，但值得确认。  _[AI · llm-review]_
+  - 建议：可考虑在文档字符串中补充说明：未等到孪生行的访问会保留在字典中直至迭代结束，不影响正确性。
+
+---
+&lt;sub&gt;本评论由自动检视机器人生成，仅供参考，不构成人工审批结论；同一提交（head SHA）不会重复评论。&lt;/sub&gt;
+</pre></details></div><div class="pr-body" style="border-top:none;padding-top:0"><a href="https://gitcode.com/cann/npu-simulator/merge_requests/60" target="_blank" rel="noopener">在 GitCode 打开 PR ↗</a></div></details></section><footer><span>由 GitHub Actions 自动生成 · <a href="https://gitcode.com/cann/npu-simulator/pulls" target="_blank" rel="noopener">cann/npu-simulator</a></span><span>同一提交不会重复评论</span></footer>
+</div>
+</body>
+</html>
