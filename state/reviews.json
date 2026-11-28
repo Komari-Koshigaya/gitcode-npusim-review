@@ -28,8 +28,9 @@
           "llm"
         ],
         "findings_count": 2,
-        "head_sha": "3ff8d6045751c73a562ca1684a03914eb0034503",
-        "reviewed_at": "2026-11-24T23:23:41+08:00",
+        "head_sha": "bf1dbdabf5c3327993e625ef7bfed536660bce2d",
+        "inline_posted": 1,
+        "reviewed_at": "2026-11-28T11:12:24+08:00",
         "severity": "low"
       },
       "76": {
@@ -57,11 +58,11 @@
           "rules",
           "llm"
         ],
-        "findings_count": 3,
-        "head_sha": "1be4d9fc41b99b99dd75fb529fc9b1d15d8f4055",
-        "inline_posted": 2,
-        "reviewed_at": "2026-11-27T11:35:06+08:00",
-        "severity": "low"
+        "findings_count": 1,
+        "head_sha": "1c06bfc23d48b7f878800354de2d6402603b5f3f",
+        "inline_posted": 1,
+        "reviewed_at": "2026-11-28T11:12:24+08:00",
+        "severity": "medium"
       },
       "83": {
         "engines": [
@@ -73,6 +74,17 @@
         "inline_posted": 3,
         "reviewed_at": "2026-11-27T11:35:06+08:00",
         "severity": "high"
+      },
+      "84": {
+        "engines": [
+          "rules",
+          "llm"
+        ],
+        "findings_count": 3,
+        "head_sha": "3b7a0daee096b7886abce49e74f04940016ff6e2",
+        "inline_posted": 3,
+        "reviewed_at": "2026-11-28T11:12:24+08:00",
+        "severity": "medium"
       }
     }
   },
